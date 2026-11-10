@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>H-HOOD CAFE</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#17181b;--card:#25272c;--line:#3a3d43;--y:#f5b800;--t:#f4efe3;--m:#9a9a9a;--g:#4cc38a;--r:#e5604d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1200px 500px at 50% -100px,#2a2418,var(--bg));color:var(--t);font-family:Oswald,system-ui,sans-serif;font-size:16px}
+h1,h2,h3{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.04em;margin:0;font-weight:400}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:2px solid var(--y);position:sticky;top:env(safe-area-inset-top,0px);background:rgba(23,24,27,.94);backdrop-filter:blur(8px);z-index:5}
+header h1{font-size:30px;color:var(--y)}header small{color:var(--m);display:block;font-size:12px;letter-spacing:.1em}
+nav a{color:var(--t);text-decoration:none;border:1px solid var(--line);padding:6px 12px;border-radius:20px;font-size:14px;margin-left:6px}
+nav a.on{background:var(--y);color:#111;border-color:var(--y)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:rgba(23,24,27,.94);z-index:10}
+main{max-width:1120px;margin:0 auto;padding:16px}
+.hero{border-radius:18px;padding:26px 24px;margin-bottom:8px;background:linear-gradient(120deg,#f5b800,#e08a00);color:#1a1405;display:flex;align-items:center;justify-content:space-between;gap:12px;overflow:hidden}
+.hero h2{font-size:44px;line-height:1}.hero p{margin:6px 0 0;font-weight:600}.hero .rb{font-size:74px;line-height:1}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0;position:sticky;top:calc(58px + env(safe-area-inset-top,0px));background:var(--bg);z-index:4}
+.chips button{white-space:nowrap;border:1px solid var(--line);background:var(--card);color:var(--t);border-radius:20px;padding:6px 14px;font:600 14px Oswald,sans-serif;cursor:pointer}
+.layout{display:grid;grid-template-columns:1fr 340px;gap:18px}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.hero h2{font-size:32px}.hero .rb{font-size:52px}}
+.cat{font-size:28px;margin:18px 0 10px;border-left:4px solid var(--y);padding-left:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.item{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 0 10px;cursor:pointer;text-align:left;color:var(--t);font:inherit;display:flex;flex-direction:column;gap:4px;overflow:hidden;transition:.15s}
+.item:hover{transform:translateY(-3px);border-color:var(--y)}.item:active{transform:scale(.97)}
+.item .art{background:#2f3136}.item .art svg{display:block;width:100%;height:auto}
+.item b{font-weight:600;font-size:14px;text-transform:uppercase;padding:0 10px;line-height:1.15;min-height:32px}
+.pr{display:flex;justify-content:space-between;align-items:center;padding:0 10px}.pr span{color:var(--y);font-size:19px}.pr em{font-style:normal;font-size:12px;background:var(--y);color:#111;border-radius:12px;padding:2px 9px;font-weight:600}
+.bd{position:absolute;top:8px;right:8px;background:var(--g);color:#06210f;border-radius:50%;width:24px;height:24px;display:grid;place-items:center;font-style:normal;font-weight:600;font-size:13px}
+.item:disabled{opacity:.4;cursor:not-allowed}.item small{color:var(--r);padding:0 10px;font-size:12px}
+.cart{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;align-self:start;position:sticky;top:130px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.q{display:flex;align-items:center;gap:6px}.q button{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--t);cursor:pointer}
+input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--t);font:inherit;margin:8px 0}
+.btn{width:100%;padding:12px;border:0;border-radius:10px;background:var(--y);color:#111;font:600 17px Oswald,sans-serif;cursor:pointer;letter-spacing:.05em}
+.btn:disabled{opacity:.4;cursor:default}.btn.s{width:auto;padding:6px 12px;font-size:14px}
+.tot{display:flex;justify-content:space-between;font-size:22px;margin:10px 0;color:var(--y)}
+.fab{display:none}@media(max-width:820px){.fab{display:block;position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:6;box-shadow:0 6px 20px #000a}main{padding-bottom:90px}}
+.ok{text-align:center;padding:30px 10px}.ok .no{font:400 72px 'Bebas Neue',Impact,sans-serif;color:var(--y)}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}@media(max-width:820px){.cols{grid-template-columns:1fr}}
+.col h3{font-size:22px;padding:6px 0;border-bottom:3px solid var(--y);margin-bottom:10px}
+.ord{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.ord h4{margin:0 0 6px;font-size:18px;display:flex;justify-content:space-between}.ord ul{margin:0 0 8px;padding-left:18px;font-size:14px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 16px;flex:1;min-width:120px}
+.stat b{display:block;font:400 28px 'Bebas Neue',Impact,sans-serif;color:var(--y)}.m{color:var(--m);font-size:13px}
+.note{background:#3a2f0a;border:1px solid var(--y);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.tabs button{padding:8px 16px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--t);font:600 15px Oswald,sans-serif;cursor:pointer}.tabs button.on{background:var(--y);color:#111;border-color:var(--y)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}th{color:var(--m);font-weight:400;font-size:12px;letter-spacing:.08em}td.n,th.n{text-align:right}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;overflow-x:auto}.box h3{font-size:22px;margin-bottom:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:820px){.g2{grid-template-columns:1fr}}
+.sm{width:70px;margin:0;padding:6px}.low{color:var(--r)}.ok2{color:var(--g)}
+.dn{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.lg{font-size:14px;margin:3px 0}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+.hb{display:grid;grid-template-columns:130px 1fr 80px;align-items:center;gap:8px;margin:5px 0;font-size:13px}.hb div{background:#34373d;border-radius:5px;height:12px;overflow:hidden}.hb i{display:block;height:100%;border-radius:5px}.hb span:last-child{text-align:right;color:var(--m)}
+.ai{background:linear-gradient(135deg,#2b2a1c,#25272c);border:1px solid var(--y)}.ai li{margin:6px 0}
+.leg{font-size:12px;color:var(--m)}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 10px}
+.ov{position:fixed;inset:0;background:#000b;z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px;position:relative;animation:up .2s}
+@media(min-width:700px){.ov{align-items:center}.sheet{border-radius:20px}}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+.sh{display:flex;gap:14px;align-items:center;margin-bottom:6px}.art2{width:92px;border-radius:14px;overflow:hidden;flex:none;background:#2f3136}.art2 svg{display:block;width:100%}
+.sheet h4{margin:16px 0 8px;font:400 18px 'Bebas Neue',Impact,sans-serif;letter-spacing:.06em;color:var(--y)}
+.opts{display:flex;gap:8px;flex-wrap:wrap}.op{padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:var(--bg);color:var(--t);font:600 14px Oswald,sans-serif;cursor:pointer}.op.on{background:var(--y);color:#111;border-color:var(--y)}
+.adds{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ad{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--t);font:14px Oswald,sans-serif;cursor:pointer;text-align:left}.ad.on{border-color:var(--g);background:#17302a}.ad b{color:var(--y);font-weight:600;white-space:nowrap}
+.x{position:absolute;top:10px;right:12px;background:none;border:0;color:var(--m);font-size:22px;cursor:pointer}
+.bar{display:flex;gap:12px;align-items:center;margin-top:16px;position:sticky;bottom:-18px;background:var(--card);padding:10px 0}.q.big{font-size:20px}.q.big button{width:36px;height:36px;font-size:20px}
+.srch{flex:1;min-width:150px;margin:0;padding:7px 12px;border-radius:20px}
+.seg{display:flex;gap:6px;margin:8px 0}.seg button{flex:1;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--t);font:600 14px Oswald,sans-serif;cursor:pointer}.seg button.on{background:var(--y);color:#111;border-color:var(--y)}
+.cart .row>div:first-child{flex:1}.cart .row b{font-weight:600}
+@media(max-width:480px){.adds{grid-template-columns:1fr}}
+</style></head><body>
+<header><div><h1>H-HOOD CAFE</h1><small id="sub"></small></div>
+<nav><a href="#order" id="n1">Order</a><a href="#admin" id="n2">Staff</a></nav></header>
+<main id="app"></main><div id="modal"></div>
+<script>
+const MENU=[
+["Coffee Espresso",[["Americano",50],["Cappuccino",60],["Spanish",60],["Macchiato",60],["Chocolate Mocha",60],["White Chocolate",60],["Cheesecake",60],["Strawberry",60]]],
+["Milk Based",[["Milk and Caramel",60],["Milk and Chocolate",60],["Milk and White Chocolate",60],["Milk and Cheesecake",60],["Strawberry and Milk",60],["Choco Strawberry and Milk",60]]],
+["Fruit Tea Soda",[["Green Apple",35],["Blueberry",35],["Mixed Berries",35],["Ice Tea with Calamansi",35]]],
+["Matcha Based",[["Matcha Latte",70],["Matcha Espresso",80],["Matcha Strawberry",80]]]];
+const ART={Americano:["#3b2314","hot"],Cappuccino:["#c8a27a","hot"],Spanish:["#d9b48a","iced"],Macchiato:["#b98b5e","hot"],"Chocolate Mocha":["#5a3a2a","iced"],"White Chocolate":["#efe3c8","iced"],Cheesecake:["#f3dfb5","iced"],Strawberry:["#f08aa0","iced"],"Milk and Caramel":["#d99a4e","iced"],"Milk and Chocolate":["#6b4332","iced"],"Milk and White Chocolate":["#f2ead6","iced"],"Milk and Cheesecake":["#f6e6c0","iced"],"Strawberry and Milk":["#f6b3c2","iced"],"Choco Strawberry and Milk":["#b86a78","iced"],"Green Apple":["#9fd35a","soda"],Blueberry:["#6a6bd6","soda"],"Mixed Berries":["#b0477a","soda"],"Ice Tea with Calamansi":["#e8b93c","soda"],"Matcha Latte":["#8fb86a","iced"],"Matcha Espresso":["#5f8f4a","iced"],"Matcha Strawberry":["#c9a0a0","iced"]};
+const PIN="1234",$=s=>document.querySelector(s),peso=n=>"₱"+(Math.round(n*100)/100),COST=.5,LOW=10,PAL=["#f5b800","#e5604d","#4cc38a","#6aa7ff","#c78bff","#ff9f5a"];
+const ALL=MENU.flatMap(([c,a])=>a.map(([n,p])=>({n,p,c}))),catOf={};ALL.forEach(x=>catOf[x.n]=x.c);
+const CF="Coffee Espresso",MK="Milk Based",MT="Matcha Based",FT="Fruit Tea Soda";
+const ADDONS=[{id:"shot",n:"Extra espresso shot",p:20,e:"☕",c:[CF,MT]},{id:"milk",n:"Extra milk",p:10,e:"🥛",c:[CF,MK,MT]},{id:"whip",n:"Whipped cream",p:15,e:"🍦",c:[CF,MK,MT]},{id:"car",n:"Caramel drizzle",p:10,e:"🍯",c:[CF,MK,MT]},{id:"choc",n:"Chocolate syrup",p:10,e:"🍫",c:[CF,MK,MT]},{id:"mshot",n:"Matcha shot",p:20,e:"🍵",c:[MT,MK]},{id:"pearl",n:"Pearls",p:10,e:"⚫",c:[MK,MT,FT]},{id:"jelly",n:"Fruit jelly",p:10,e:"🍓",c:[FT]}];
+const unit=i=>i.p+(i.ap||0);
+let cart=[],sel=null,otype="Dine-in",qs="",orders=[],coll=null,done=null,authed=false,local=[],inv={},invColl=null,tab="orders",range="7",demo=false,dOrders=[],dInv={};
+const out=n=>inv[n]&&inv[n].stock<=0, dk=t=>new Date(t).toLocaleDateString("en-CA"), ds=d=>new Date(d).toLocaleDateString([],{weekday:"short",day:"numeric"});
+const getInv=()=>demo?dInv:inv, getDone=()=>(demo?dOrders:orders).filter(o=>o.status==="done");
+function art(n){const[c,t]=ART[n]||["#a67c52","iced"],id="g"+n.replace(/\W/g,"");
+let s=`<svg viewBox="0 0 100 100"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".8"/><stop offset="1" stop-color="${c}"/></linearGradient></defs><circle cx="50" cy="52" r="38" fill="${c}" opacity=".22"/>`;
+if(t==="hot")s+=`<ellipse cx="50" cy="82" rx="31" ry="6" fill="#d8d2c4"/><path d="M26 44h42v16a21 21 0 0 1-42 0z" fill="#f4efe3"/><path d="M30 47h34v13a17 17 0 0 1-34 0z" fill="url(#${id})"/><path d="M68 49h4a8 8 0 0 1 0 16h-6" fill="none" stroke="#f4efe3" stroke-width="4"/><path d="M40 36q-5-7 0-13M50 36q-5-7 0-13M60 36q-5-7 0-13" stroke="#f4efe3" stroke-opacity=".6" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+else{s+=`<path d="M29 24h42l-5 58H34z" fill="#fff" fill-opacity=".14" stroke="#f4efe3" stroke-opacity=".6" stroke-width="2.5" stroke-linejoin="round"/><path d="M31.4 40h37.2l-3.7 42H35z" fill="url(#${id})"/><rect x="38" y="46" width="10" height="10" rx="2" fill="#fff" fill-opacity=".35" transform="rotate(12 43 51)"/><rect x="52" y="58" width="10" height="10" rx="2" fill="#fff" fill-opacity=".3" transform="rotate(-10 57 63)"/><path d="M58 8L52 56" stroke="#f5b800" stroke-width="3.5" stroke-linecap="round"/>`;
+s+=t==="soda"?`<circle cx="42" cy="70" r="2.5" fill="#fff" opacity=".6"/><circle cx="60" cy="48" r="2" fill="#fff" opacity=".6"/><circle cx="48" cy="60" r="1.8" fill="#fff" opacity=".6"/><circle cx="72" cy="26" r="9" fill="#f5d94a"/><circle cx="72" cy="26" r="6" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.5"/>`:`<ellipse cx="50" cy="24" rx="21" ry="3.5" fill="#f4efe3" opacity=".5"/>`}
+return s+"</svg>"}
+function bars(a,h=150){const n=a.length||1,W=Math.max(320,n*40),mx=Math.max(1,...a.map(x=>x.v)),bw=W/n;
+return `<svg viewBox="0 0 ${W} ${h+34}" style="width:100%;min-width:${Math.min(W,560)}px">`+a.map((x,i)=>{const bh=x.v/mx*h,X=i*bw+bw*.15,w=bw*.7;
+let r=`<rect x="${X}" y="${h+6-bh}" width="${w}" height="${Math.max(bh,1)}" rx="4" fill="${x.c||"#f5b800"}"${x.dash?' fill-opacity=".3" stroke="#f5b800" stroke-dasharray="4 3"':""}/>`;
+if(x.v2)r+=`<rect x="${X}" y="${h+6-x.v2/mx*h}" width="${w}" height="${x.v2/mx*h}" rx="4" fill="#4cc38a"/>`;
+if(n<=14&&x.v)r+=`<text x="${X+w/2}" y="${h+1-bh}" text-anchor="middle" font-size="10" fill="#f4efe3">${x.t||Math.round(x.v)}</text>`;
+return r+`<text x="${X+w/2}" y="${h+22}" text-anchor="middle" font-size="10" fill="#9a9a9a">${x.l}</text>`}).join("")+`</svg>`}
+function donut(d){const T=d.reduce((s,x)=>s+x.v,0)||1,C=2*Math.PI*38;let off=0;
+return `<div class="dn"><svg viewBox="0 0 100 100" width="150"><g transform="rotate(-90 50 50)"><circle cx="50" cy="50" r="38" fill="none" stroke="#3a3d43" stroke-width="16"/>${d.map((x,i)=>{const l=x.v/T*C,s=`<circle cx="50" cy="50" r="38" fill="none" stroke="${PAL[i%6]}" stroke-width="16" stroke-dasharray="${l} ${C-l}" stroke-dashoffset="${-off}"/>`;off+=l;return s}).join("")}</g></svg><div>${d.map((x,i)=>`<div class="lg"><i style="background:${PAL[i%6]}"></i>${x.l} <b>${Math.round(x.v/T*100)}%</b></div>`).join("")||'<span class="m">No data</span>'}</div></div>`}
+const hb=r=>{const mx=Math.max(1,...r.map(x=>x.v));return r.map(x=>`<div class="hb"><span>${x.l}</span><div><i style="width:${x.v/mx*100}%;background:${x.c||"#f5b800"}"></i></div><span>${x.t}</span></div>`).join("")||'<p class="m">No data yet.</p>'};
+function setStock(n,v){v=Math.max(0,Math.floor(+v)||0);const r={n,stock:v};if(demo){dInv[n]=r;render()}else if(invColl)invColl.doc(n.toLowerCase().replace(/[^a-z0-9]+/g,"-")).set(r).catch(console.error);else{inv[n]=r;render()}}
+function save(o){if(coll)return coll.doc(o.id).set(o).catch(console.error);local.unshift(o);orders=local;render();return Promise.resolve()}
+function genDemo(){let s=7;const r=()=>(s=(s*16807)%2147483647)/2147483647,o=[];
+for(let d=20;d>=0;d--){const day=new Date();day.setDate(day.getDate()-d);const wd=day.getDay(),cnt=Math.round((14+(wd%6==0?8:0)+(20-d)*.4)*(.8+r()*.4));
+for(let k=0;k<cnt;k++){const h=[7,8,9,10,11,13,14,15,15,16,16,17,17,18,19,20][Math.floor(r()*16)],t=new Date(day);t.setHours(h,Math.floor(r()*60));
+const it=[];for(let j=0,m=1+Math.floor(r()*3);j<m;j++){const x=ALL[Math.floor(r()*r()*ALL.length)];const ad=r()<.3?ADDONS[Math.floor(r()*3)]:null;it.push({n:x.n,p:x.p,q:1+Math.floor(r()*1.6),ap:ad?ad.p:0,add:ad?[ad.n]:[]})}
+o.push({id:"d"+d+"_"+k,no:"000",name:"",items:it,total:it.reduce((a,i)=>a+unit(i)*i.q,0),status:"done",t:+t})}}
+dOrders=o;dInv={};ALL.forEach(x=>dInv[x.n]={n:x.n,stock:4+Math.floor(r()*56)})}
+function forecast(L){const byD={},wd={};L.forEach(o=>{const k=dk(o.t);byD[k]=(byD[k]||0)+o.total});
+const keys=Object.keys(byD),first=L.length?Math.min(...L.map(o=>o.t)):Date.now(),span=Math.max(1,Math.min(14,Math.ceil((Date.now()-first)/864e5)+1));
+const data=[];for(let i=span-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);data.push(byD[dk(d)]||0)}
+const n=data.length,mean=data.reduce((a,b)=>a+b,0)/n;let sl=0;if(n>=3){const mx=(n-1)/2;let num=0,den=0;data.forEach((y,i)=>{num+=(i-mx)*(y-mean);den+=(i-mx)**2});sl=num/den}
+keys.forEach(k=>{const w=new Date(k+"T12:00").getDay();(wd[w]=wd[w]||[]).push(byD[k])});
+const tot=keys.reduce((a,k)=>a+byD[k],0),avgAll=tot/Math.max(1,keys.length),fac=w=>wd[w]&&wd[w].length>=2?Math.min(1.5,Math.max(.6,(wd[w].reduce((a,b)=>a+b,0)/wd[w].length)/avgAll)):1;
+const pred=[];for(let i=1;i<=7;i++){const d=new Date();d.setDate(d.getDate()+i);pred.push({d,v:Math.max(0,(mean+sl*(n-1+i-(n-1)/2))*fac(d.getDay()))})}
+const last7=data.slice(-7).reduce((a,b)=>a+b,0),next7=pred.reduce((a,p)=>a+p.v,0);
+return{pred,last7,next7,span,mean,growth:Math.min(1.3,Math.max(.7,next7/Math.max(1,mean*7)))}}
+function salesData(){const L=getDone(),st=new Date();st.setHours(0,0,0,0);st.setDate(st.getDate()-(range==="1"?0:range==="all"?3650:+range-1));return{list:range==="all"?L:L.filter(o=>o.t>=st),days:range==="all"?30:+range}}
+const view=()=>/^#(admin|staff)/.test(location.hash)?"admin":"order";
+function render(){$("#n1").className=view()==="order"?"on":"";$("#n2").className=view()==="admin"?"on":"";$("#sub").textContent=view()==="admin"?"STAFF · BARISTA / CASHIER":"FRESH BREWS · GOOD VIBES";view()==="admin"?renderAdmin():renderOrder()}
+const cq=n=>cart.filter(l=>l.n===n).reduce((s,l)=>s+l.q,0),ctot=()=>cart.reduce((s,l)=>s+unit(l)*l.q,0);
+const lineDesc=l=>[l.serve,l.sugar!=null?l.sugar+"% sugar":"",...(l.add||[]),l.note?"“"+l.note+"”":""].filter(Boolean).join(" · ");
+function menuHTML(){const f=qs.trim().toLowerCase();let h="";MENU.forEach(([c,its],i)=>{const l=its.filter(([n])=>n.toLowerCase().includes(f));if(!l.length)return;
+h+=`<h2 class="cat" id="c${i}">${c}</h2><div class="grid">${l.map(([n,p])=>`<button class="item" data-n="${n}" data-p="${p}" ${out(n)?"disabled":""}><div class="art">${art(n)}</div><b>${n}</b><div class="pr"><span>${peso(p)}</span><em>CUSTOMIZE</em></div>${out(n)?"<small>SOLD OUT</small>":""}${cq(n)?`<i class="bd">${cq(n)}</i>`:""}</button>`).join("")}</div>`});
+return h||'<p class="m">No drinks match your search.</p>'}
+function openSel(n,p){const c=catOf[n];sel={n,p,c,q:1,serve:c===CF?"Iced":"Regular ice",sugar:100,add:[],note:""};renderModal()}
+function renderModal(){const m=$("#modal");if(!sel){m.innerHTML="";document.body.style.overflow="";return}document.body.style.overflow="hidden";
+const av=ADDONS.filter(a=>a.c.includes(sel.c)),ap=av.filter(a=>sel.add.includes(a.id)).reduce((s,a)=>s+a.p,0),sv=sel.c===CF?["Hot","Iced"]:["Regular ice","Less ice","No ice"];
+m.innerHTML=`<div class="ov"><div class="sheet"><button class="x">✕</button><div class="sh"><div class="art2">${art(sel.n)}</div><div><h2 style="font-size:30px">${sel.n}</h2><div class="m">${sel.c} · base ${peso(sel.p)}</div></div></div>
+<h4>Serve</h4><div class="opts">${sv.map(x=>`<button class="op ${sel.serve===x?"on":""}" data-sv="${x}">${x}</button>`).join("")}</div>
+<h4>Sugar level</h4><div class="opts">${[0,25,50,75,100].map(x=>`<button class="op ${sel.sugar===x?"on":""}" data-sg="${x}">${x}%</button>`).join("")}</div>
+<h4>Add-ons</h4><div class="adds">${av.map(a=>`<button class="ad ${sel.add.includes(a.id)?"on":""}" data-ad="${a.id}"><span>${a.e} ${a.n}</span><b>+${peso(a.p)}</b></button>`).join("")}</div>
+<h4>Special request</h4><input id="nt" maxlength="60" placeholder="e.g. extra hot, separate cup" value="${sel.note.replace(/"/g,"&quot;")}">
+<div class="bar"><span class="q big"><button data-sq="-1">−</button>${sel.q}<button data-sq="1">+</button></span><button class="btn" id="addc">ADD TO ORDER · ${peso((sel.p+ap)*sel.q)}</button></div></div></div>`}
+function renderOrder(){const keep=$("#cn")?$("#cn").value:"",total=ctot();
+if(done){$("#app").innerHTML=`<div class="cart ok" style="max-width:420px;margin:30px auto;position:static"><div style="font-size:60px">🐰☕</div><p class="m">YOUR ORDER NUMBER</p><div class="no">#${done.no}</div><p>Thanks${done.name?", "+done.name:""}! (${done.type}) Please pay at the counter. We'll call you when it's ready.</p><p class="m">Total ${peso(done.total)}</p><button class="btn" onclick="done=null;render()">NEW ORDER</button></div>`;return}
+$("#app").innerHTML=`<div class="hero"><div><h2>What are you having today?</h2><p>Pick a drink, customize it, pay at the counter.</p></div><div class="rb">🐰</div></div>
+<div class="chips"><input id="qs" class="srch" placeholder="🔍 Search drinks" value="${qs.replace(/"/g,"&quot;")}">${MENU.map(([c],i)=>`<button data-go="c${i}">${c}</button>`).join("")}</div>
+<div class="layout"><div id="menu">${menuHTML()}</div>
+<aside class="cart" id="cart"><h2>Your Order</h2><div class="seg">${["Dine-in","Take-out"].map(t=>`<button data-ot="${t}" class="${otype===t?"on":""}">${t==="Dine-in"?"🪑":"🛍️"} ${t}</button>`).join("")}</div>${cart.length?cart.map((l,i)=>`<div class="row"><div><b>${l.n}</b><div class="m">${lineDesc(l)}</div></div><span class="q"><button data-d="-1" data-i="${i}">−</button>${l.q}<button data-d="1" data-i="${i}">+</button></span><span>${peso(unit(l)*l.q)}</span></div>`).join(""):'<p class="m">Tap a drink to customize and add it.</p>'}
+<div class="tot"><span>TOTAL</span><span>${peso(total)}</span></div><input id="cn" placeholder="Your name (optional)" value="${keep.replace(/"/g,"&quot;")}"><button class="btn" id="place" ${cart.length?"":"disabled"}>PLACE ORDER</button></aside></div>
+${cart.length?`<button class="btn fab" data-go="cart">VIEW ORDER · ${cart.reduce((s,l)=>s+l.q,0)} · ${peso(total)}</button>`:""}`}
+document.addEventListener("input",e=>{if(e.target.id==="qs"){qs=e.target.value;$("#menu").innerHTML=menuHTML()}if(e.target.id==="nt"&&sel)sel.note=e.target.value});
+document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(g){const el=document.getElementById(g.dataset.go);el&&el.scrollIntoView();return}
+if(sel){const av=ADDONS.filter(a=>a.c.includes(sel.c));
+if(e.target.classList.contains("ov")||e.target.closest(".x")){sel=null;renderModal();return}
+const sv=e.target.closest("[data-sv]");if(sv){sel.serve=sv.dataset.sv;renderModal();return}
+const sg=e.target.closest("[data-sg]");if(sg){sel.sugar=+sg.dataset.sg;renderModal();return}
+const ad=e.target.closest("[data-ad]");if(ad){const k=ad.dataset.ad,i=sel.add.indexOf(k);i<0?sel.add.push(k):sel.add.splice(i,1);renderModal();return}
+const sq=e.target.closest("[data-sq]");if(sq){sel.q=Math.max(1,sel.q+ +sq.dataset.sq);renderModal();return}
+if(e.target.id==="addc"){const ch=av.filter(a=>sel.add.includes(a.id)),l={n:sel.n,p:sel.p,ap:ch.reduce((x,a)=>x+a.p,0),q:sel.q,serve:sel.serve,sugar:sel.sugar,add:ch.map(a=>a.n),note:sel.note.trim()},key=JSON.stringify([l.n,l.serve,l.sugar,l.add,l.note]),ex=cart.find(c=>c.key===key);
+ex?ex.q+=l.q:cart.push({...l,key});sel=null;renderModal();renderOrder();return}return}
+const it=e.target.closest(".item");if(it){openSel(it.dataset.n,+it.dataset.p);return}
+const ot=e.target.closest("[data-ot]");if(ot){otype=ot.dataset.ot;renderOrder();return}
+const d=e.target.closest("[data-d]");if(d){const c=cart[+d.dataset.i];c.q+=+d.dataset.d;if(c.q<=0)cart.splice(+d.dataset.i,1);renderOrder();return}
+if(e.target.id==="place"){const items=cart.map(l=>({n:l.n,p:l.p,ap:l.ap,q:l.q,serve:l.serve,sugar:l.sugar,add:l.add,note:l.note})),o={type:otype,id:"o"+Date.now(),no:String(Math.floor(Math.random()*900)+100),name:($("#cn").value||"").trim().slice(0,30),items,total:items.reduce((s,i)=>s+unit(i)*i.q,0),status:"new",t:Date.now()};cart=[];done=o;save(o);render();return}
+const tb=e.target.closest("[data-tab]");if(tb){tab=tb.dataset.tab;render();return}
+const rg=e.target.closest("[data-rg]");if(rg){range=rg.dataset.rg;render();return}
+if(e.target.id==="demo"){demo=!demo;if(demo&&!dOrders.length)genDemo();render();return}
+const sd=e.target.closest("[data-sd]");if(sd){const n=sd.dataset.n;setStock(n,(getInv()[n]?getInv()[n].stock:0)+ +sd.dataset.sd);return}
+if(e.target.id==="csv"){exportCsv();return}
+const st=e.target.closest("[data-st]");if(st){const id=st.dataset.id;if(st.dataset.st==="preparing"){const o=orders.find(x=>x.id===id);o&&o.items.forEach(i=>{const r=inv[i.n];if(r)setStock(i.n,r.stock-i.q)})}
+if(coll)coll.doc(id).update({status:st.dataset.st});else{const o=orders.find(x=>x.id===id);o.status=st.dataset.st;render()}}});
+function tabs(){return `<div class="tabs">${[["orders","Orders"],["inventory","Inventory"],["sales","Sales & Forecast"]].map(([k,l])=>`<button data-tab="${k}" class="${tab===k?"on":""}">${l}</button>`).join("")}${tab!=="orders"?`<button id="demo" style="margin-left:auto">${demo?"Back to live data":"Preview with sample data"}</button>`:""}</div>${demo&&tab!=="orders"?'<div class="note">Showing generated sample data (3 weeks of orders) so you can preview the charts and predictions. Nothing is saved.</div>':""}`}
+function renderAdmin(){if(!authed){$("#app").innerHTML=`<div class="cart" style="max-width:340px;margin:40px auto;position:static"><h2>Staff Login</h2><input id="pin" type="password" inputmode="numeric" placeholder="PIN"><button class="btn" id="go">ENTER</button></div>`;
+$("#go").onclick=()=>{if($("#pin").value===PIN){authed=true;render()}else{$("#pin").value="";$("#pin").placeholder="Wrong PIN"}};return}
+if(tab!=="orders")return renderTab();
+const today=new Date().toDateString(),td=orders.filter(o=>new Date(o.t).toDateString()===today),paid=td.filter(o=>o.status==="done"),sum=paid.reduce((s,o)=>s+o.total,0);
+const cols=[["new","New","preparing","START"],["preparing","Preparing","ready","READY"],["ready","Ready for pickup","done","PAID & DONE"]];
+$("#app").innerHTML=`${tabs()}${coll?"":'<div class="note">Live sync is off (not signed in). Orders from other devices won\'t appear here.</div>'}
+<div class="stats"><div class="stat"><span class="m">ORDERS TODAY</span><b>${td.length}</b></div><div class="stat"><span class="m">SALES (COMPLETED)</span><b>${peso(sum)}</b></div><div class="stat"><span class="m">PROFIT (50%)</span><b>${peso(sum*(1-COST))}</b></div><div class="stat"><span class="m">IN QUEUE</span><b>${td.filter(o=>o.status!=="done"&&o.status!=="cancelled").length}</b></div></div>
+<div class="cols">${cols.map(([s,l,nx,b])=>`<div class="col"><h3>${l}</h3>${orders.filter(o=>o.status===s).sort((a,c)=>a.t-c.t).map(o=>`<div class="ord"><h4><span>#${o.no} ${o.name||""}</span><span>${peso(o.total)}</span></h4><ul>${o.items.map(i=>`<li>${i.q}× ${i.n}${lineDesc(i)?`<div class="m">${lineDesc(i)}</div>`:""}</li>`).join("")}</ul><div class="m">${new Date(o.t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}${o.type?" · "+o.type:""}</div><button class="btn s" data-id="${o.id}" data-st="${nx}">${b}</button> ${s==="new"?`<button class="btn s" style="background:var(--r);color:#fff" data-id="${o.id}" data-st="cancelled">CANCEL</button>`:""}</div>`).join("")||'<p class="m">Empty</p>'}</div>`).join("")}</div>`}
+function usage(L){const f=forecast(L),u={};L.filter(o=>o.t>Date.now()-f.span*864e5).forEach(o=>o.items.forEach(i=>u[i.n]=(u[i.n]||0)+i.q));Object.keys(u).forEach(k=>u[k]/=f.span);return{u,f}}
+function renderTab(){const I=getInv(),L0=getDone(),{u,f}=usage(L0);
+if(tab==="inventory"){const tr=Object.values(I),mx=Math.max(1,...tr.map(r=>r.stock));
+const rows=MENU.map(([c,its])=>`<tr><td colspan="5" style="color:var(--y);font-family:'Bebas Neue',Impact,sans-serif;font-size:20px">${c}</td></tr>`+its.map(([n])=>{const r=I[n],s=r?r.stock:null,dl=r&&u[n]?r.stock/u[n]:null;
+return `<tr><td>${n}</td><td>${s===null?'<span class="m">not tracked</span>':s<=0?'<span class="low">SOLD OUT</span>':s<=LOW?`<span class="low">${s} · low</span>`:s}</td><td class="n">${dl===null?'<span class="m">–</span>':`<span class="${dl<3?"low":""}">${dl.toFixed(1)} d</span>`}</td><td class="n"><button class="btn s" data-n="${n}" data-sd="-1">−1</button> <button class="btn s" data-n="${n}" data-sd="1">+1</button> <button class="btn s" data-n="${n}" data-sd="10">+10</button></td><td class="n"><input class="sm" type="number" min="0" placeholder="set" onchange="setStock('${n}',this.value)"></td></tr>`}).join("")).join("");
+const ok=tr.filter(r=>r.stock>LOW).length,lo=tr.filter(r=>r.stock>0&&r.stock<=LOW).length,so=tr.filter(r=>r.stock<=0).length;
+$("#app").innerHTML=`${tabs()}<div class="g2"><div class="box"><h3>Stock health</h3>${tr.length?donut([{l:"Healthy",v:ok},{l:"Low",v:lo},{l:"Sold out",v:so}]):'<p class="m">No items tracked yet. Set a stock number below to start.</p>'}</div>
+<div class="box"><h3>Stock by category</h3>${hb(MENU.map(([c,a],i)=>({l:c,v:a.reduce((s,[n])=>s+(I[n]?I[n].stock:0),0),c:PAL[i],t:a.reduce((s,[n])=>s+(I[n]?I[n].stock:0),0)+" cups"})))}</div></div>
+<div class="box"><h3>Stock levels</h3>${hb(tr.sort((a,b)=>a.stock-b.stock).map(r=>({l:r.n,v:r.stock,c:r.stock<=0?"#e5604d":r.stock<=LOW?"#ff9f5a":"#4cc38a",t:r.stock})))}</div>
+<div class="box"><h3>Inventory</h3><p class="m">Stock is counted in cups. Enter a number to start tracking an item. Stock drops when you press START on an order, and sold-out items are blocked for customers. Low = ${LOW} or less. "Days left" uses recent sales speed.</p><table><tr><th>ITEM</th><th>STOCK</th><th class="n">DAYS LEFT</th><th class="n">ADJUST</th><th class="n">SET</th></tr>${rows}</table></div>`;return}
+const{list,days}=salesData(),rev=list.reduce((s,o)=>s+o.total,0),cups=list.reduce((s,o)=>s+o.items.reduce((a,i)=>a+i.q,0),0),byItem={},byDay={},byCat={},byHr={},byAdd={};let addRev=0;
+list.forEach(o=>{byDay[dk(o.t)]=(byDay[dk(o.t)]||0)+o.total;const h=new Date(o.t).getHours();byHr[h]=(byHr[h]||0)+o.total;o.items.forEach(i=>{const b=byItem[i.n]=byItem[i.n]||{q:0,r:0};b.q+=i.q;b.r+=i.q*unit(i);(i.add||[]).forEach(a=>{byAdd[a]=(byAdd[a]||0)+i.q});addRev+=(i.ap||0)*i.q;const c=catOf[i.n]||"Other";byCat[c]=(byCat[c]||0)+i.q*unit(i)})});
+const dayBars=[];for(let i=Math.min(days,14)-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const v=byDay[dk(d)]||0;dayBars.push({l:ds(d),v,v2:v*(1-COST)})}
+const hrs=[];for(let h=7;h<=21;h++)hrs.push({l:(h%12||12)+(h<12?"a":"p"),v:byHr[h]||0});
+const top=Object.entries(byItem).sort((a,b)=>b[1].q-a[1].q);
+const act=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=dk(d);const v=L0.filter(o=>dk(o.t)===k).reduce((a,o)=>a+o.total,0);act.push({l:ds(d),v})}
+const fb=act.concat(f.pred.map(p=>({l:ds(p.d),v:p.v,dash:1})));
+const ch=f.next7/Math.max(1,f.last7)-1,best=f.pred.reduce((a,b)=>b.v>a.v?b:a,f.pred[0]),allH={};L0.forEach(o=>{const h=new Date(o.t).getHours();allH[h]=(allH[h]||0)+1});
+const ph=Object.entries(allH).sort((a,b)=>b[1]-a[1])[0],fmtH=h=>(h%12||12)+(h<12?" AM":" PM"),topP=Object.entries(u).sort((a,b)=>b[1]-a[1]).slice(0,3);
+const conf=f.span<7?"Low (under a week of data)":f.span<14?"Medium":"Good (2+ weeks of data)";
+const adv=ALL.map(x=>{const r=I[x.n],d7=(u[x.n]||0)*7*f.growth;return{n:x.n,r,avg:u[x.n]||0,d7,need:r?Math.max(0,Math.ceil(d7*1.2-r.stock)):0}}).filter(x=>x.r||x.d7>0).sort((a,b)=>b.need-a.need||b.d7-a.d7).slice(0,12);
+$("#app").innerHTML=`${tabs()}<div class="tabs">${[["1","Today"],["7","7 days"],["30","30 days"],["all","All time"]].map(([k,l])=>`<button data-rg="${k}" class="${range===k?"on":""}">${l}</button>`).join("")}<button id="csv">Download CSV</button></div>
+<div class="stats"><div class="stat"><span class="m">REVENUE</span><b>${peso(rev)}</b></div><div class="stat"><span class="m">COST (50%)</span><b>${peso(rev*COST)}</b></div><div class="stat"><span class="m">PROFIT (50%)</span><b>${peso(rev*(1-COST))}</b></div><div class="stat"><span class="m">ORDERS</span><b>${list.length}</b></div><div class="stat"><span class="m">AVG ORDER</span><b>${peso(list.length?Math.round(rev/list.length):0)}</b></div><div class="stat"><span class="m">ITEMS SOLD</span><b>${cups}</b></div><div class="stat"><span class="m">ADD-ON SALES</span><b>${peso(addRev)}</b></div></div>
+<div class="box"><h3>Revenue &amp; profit by day</h3><span class="leg"><i style="background:#f5b800"></i>Revenue<i style="background:#4cc38a"></i>Profit</span>${bars(dayBars)}</div>
+<div class="g2"><div class="box"><h3>Sales by category</h3>${donut(Object.entries(byCat).map(([l,v])=>({l,v})))}</div><div class="box"><h3>Sales by hour</h3>${bars(hrs,110)}</div></div>
+<div class="box"><h3>Best sellers</h3>${hb(top.slice(0,10).map(([k,v])=>({l:k,v:v.q,t:v.q+" · "+peso(v.r*(1-COST))})))}<p class="m">Right side: cups sold · profit</p></div><div class="box"><h3>Popular add-ons</h3>${hb(Object.entries(byAdd).sort((a,b)=>b[1]-a[1]).map(([k,v],i)=>({l:k,v,c:PAL[i%6],t:v+" sold"})))}</div>
+<div class="box ai"><h3>🔮 Sales forecast · next 7 days</h3><span class="leg"><i style="background:#f5b800"></i>Actual<i style="background:#f5b80055;border:1px dashed #f5b800"></i>Predicted</span>${bars(fb)}
+<div class="stats" style="margin-top:10px"><div class="stat"><span class="m">EXPECTED REVENUE</span><b>${peso(Math.round(f.next7))}</b></div><div class="stat"><span class="m">EXPECTED PROFIT</span><b>${peso(Math.round(f.next7*(1-COST)))}</b></div><div class="stat"><span class="m">VS LAST 7 DAYS</span><b style="color:${ch>=0?"var(--g)":"var(--r)"}">${ch>=0?"▲":"▼"} ${Math.abs(Math.round(ch*100))}%</b></div></div>
+${L0.length?`<ul><li>Busiest day ahead: <b>${ds(best.d)}</b> (about ${peso(Math.round(best.v))}).</li>${ph?`<li>Peak hour is around <b>${fmtH(+ph[0])}</b>: have extra staff and cups ready.</li>`:""}${topP.length?`<li>Expect the most orders of: <b>${topP.map(x=>x[0]).join(", ")}</b>.</li>`:""}<li>Forecast confidence: <b>${conf}</b>. It uses the recent trend plus which weekdays are usually busier.</li></ul>`:'<p class="m">Complete some orders (mark them PAID &amp; DONE) to unlock predictions, or tap "Preview with sample data".</p>'}</div>
+<div class="box"><h3>Restock advice (next 7 days)</h3><table><tr><th>ITEM</th><th class="n">AVG / DAY</th><th class="n">NEEDED (7D)</th><th class="n">IN STOCK</th><th class="n">SUGGESTED ORDER</th></tr>${adv.map(x=>`<tr><td>${x.n}</td><td class="n">${x.avg.toFixed(1)}</td><td class="n">${Math.ceil(x.d7)}</td><td class="n">${x.r?x.r.stock:'<span class="m">not tracked</span>'}</td><td class="n ${x.need?"low":"ok2"}">${x.r?(x.need?"+"+x.need+" cups":"OK"):"–"}</td></tr>`).join("")||'<tr><td class="m">No data yet</td></tr>'}</table><p class="m">Suggested order covers predicted demand plus a 20% safety buffer.</p></div>
+<p class="m">Only orders marked PAID &amp; DONE count as sales. Cost is set at 50% of the selling price, so profit is the other 50%.</p>`}
+async function exportCsv(){try{const dl=await claude.use("downloads");if(!dl){alert("Download isn't available here.");return}
+const{list}=salesData(),q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+const csv="Date,Order No,Customer,Items,Revenue,Cost,Profit\n"+list.map(o=>[new Date(o.t).toLocaleString(),o.no,q(o.name||""),q(o.items.map(i=>i.q+"x "+i.n+(i.add&&i.add.length?" (+"+i.add.join(", ")+")":"")).join("; ")),o.total,o.total*COST,o.total*(1-COST)].join(",")).join("\n");
+await dl.save({filename:"hhood-sales-"+range+".csv",data:csv})}catch(e){console.error(e)}}
+window.addEventListener("hashchange",render);render();
+(async()=>{try{const db=await claude.use("db");if(!db)return;coll=db.collection("orders");
+coll.orderBy("t","desc").limit(500).onSnapshot(s=>{orders=s.docs.map(d=>d.data());if(view()==="admin")render()},e=>{console.error(e);coll=null;render()});
+invColl=db.collection("inventory");invColl.onSnapshot(s=>{inv={};s.docs.forEach(d=>{const x=d.data();if(x&&x.n)inv[x.n]=x});if(!(view()==="order"&&document.activeElement&&document.activeElement.id==="cn"))render()},e=>console.error(e));render()}catch(e){console.error(e)}})();
+</script></body></html>
