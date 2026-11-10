@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Project 4: 3D IT Operations Room</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- Three.js, pinned version -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+
+    <style>
+        :root {
+            --bg: #0b1120;
+            --panel: rgba(17, 26, 43, 0.9);
+            --line: #263247;
+            --line-strong: #39475d;
+            --text: #e5e7eb;
+            --heading: #f8fafc;
+            --muted: #aab6c7;
+            --dim: #94a3b8;
+            --accent: #38bdf8;
+            --accent-strong: #0369a1;
+            --accent-press: #075985;
+            --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+            --font-display: "Sora", "DM Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+            color-scheme: dark;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        #app { position: fixed; inset: 0; }
+        #stage { position: absolute; inset: 0; }
+        #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+        #stage canvas:active { cursor: grabbing; }
+
+        button { font-family: inherit; }
+        button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        /* ---------- Floating name tags + speech bubbles ---------- */
+        #labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+
+        .tag-wrap {
+            position: absolute;
+            left: 0; top: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            will-change: transform;
+        }
+
+        .tag {
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.2;
+            padding: 4px 10px;
+            border: 1px solid var(--line-strong);
+            border-radius: 8px;
+            background: rgba(11, 17, 32, 0.88);
+            color: var(--heading);
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .tag:hover, .tag.selected { border-color: var(--accent); }
+        .tag b { font-size: 0.8rem; }
+        .tag span { font-size: 0.68rem; color: var(--accent); }
+
+        .bubble {
+            position: relative;
+            max-width: 230px;
+            padding: 8px 11px;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 0.8rem;
+            line-height: 1.35;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .bubble.show { opacity: 1; transform: none; }
+
+        .bubble::after {
+            content: "";
+            position: absolute;
+            left: 50%; bottom: -6px;
+            margin-left: -6px;
+            border: 6px solid transparent;
+            border-bottom: 0;
+            border-top-color: #f8fafc;
+        }
+
+        /* ---------- HUD ---------- */
+        .hud-top {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            pointer-events: none;
+        }
+
+        .hud-top > * { pointer-events: auto; }
+
+        .back {
+            flex-shrink: 0;
+            padding: 8px 14px;
+            border: 1px solid var(--line-strong);
+            border-radius: 8px;
+            background: var(--panel);
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .back:hover { border-color: var(--accent); }
+
+        .title h1 {
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            letter-spacing: -0.02em;
+            color: var(--heading);
+            line-height: 1.2;
+        }
+
+        .title p { font-size: 0.82rem; color: var(--dim); }
+
+        .card {
+            position: absolute;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--panel);
+            backdrop-filter: blur(8px);
+        }
+
+        .card h2 {
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            letter-spacing: -0.01em;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .incident { top: 68px; left: 16px; width: min(320px, calc(100vw - 32px)); }
+
+        .inc-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+
+        .chip {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #0b1120;
+            background: #22c55e;
+        }
+
+        .inc-id { font-size: 0.8rem; color: var(--dim); }
+        .inc-title { font-size: 0.95rem; font-weight: 700; color: var(--heading); line-height: 1.35; margin-bottom: 10px; }
+
+        .inc-stats { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
+        .inc-stats strong { color: var(--heading); }
+
+        .bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+        .bar i { display: block; height: 100%; width: 0; background: #22c55e; transition: width 0.4s ease; }
+
+        .log {
+            top: 68px; right: 16px;
+            width: min(320px, calc(100vw - 32px));
+            max-height: calc(100vh - 170px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #log-list {
+            list-style: none;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 4px;
+        }
+
+        #log-list li { font-size: 0.8rem; line-height: 1.4; color: var(--muted); }
+        #log-list time { color: var(--dim); font-size: 0.72rem; margin-right: 6px; }
+        #log-list b { color: var(--accent); font-weight: 700; }
+        #log-list li.sep { color: var(--dim); font-size: 0.72rem; border-top: 1px dashed var(--line-strong); padding-top: 8px; }
+
+        .person { left: 16px; bottom: 76px; width: min(320px, calc(100vw - 32px)); }
+        .person .close {
+            position: absolute; top: 8px; right: 8px;
+            width: 28px; height: 28px;
+            border: 1px solid var(--line-strong);
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text);
+            cursor: pointer;
+        }
+        .person .close:hover { border-color: var(--accent); color: var(--accent); }
+        .person h2 { margin-bottom: 2px; color: var(--heading); font-size: 1rem; }
+        .person .role { color: var(--accent); font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; }
+        .person p { font-size: 0.84rem; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
+        .person .now { color: var(--heading); }
+
+        .toolbar {
+            position: absolute;
+            left: 50%; bottom: 16px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-width: calc(100vw - 24px);
+        }
+
+        .toolbar button {
+            padding: 9px 14px;
+            border: 1px solid var(--line-strong);
+            border-radius: 8px;
+            background: var(--panel);
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .toolbar button:hover { border-color: var(--accent); }
+        .toolbar button[aria-pressed="true"] { background: var(--accent-strong); border-color: var(--accent); color: #fff; }
+        .toolbar .btn-log { display: none; }
+
+        .hint {
+            position: absolute;
+            left: 50%; bottom: 66px;
+            transform: translateX(-50%);
+            font-size: 0.78rem;
+            color: var(--dim);
+            pointer-events: none;
+            text-align: center;
+            width: max-content;
+            max-width: calc(100vw - 32px);
+        }
+
+        #fallback {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            padding: 24px;
+            text-align: center;
+            background: var(--bg);
+            color: var(--muted);
+            z-index: 5;
+        }
+
+        #fallback[hidden] { display: none; }
+
+        @media (max-width: 760px) {
+            .title p { display: none; }
+            .incident { top: 62px; left: 12px; right: 12px; width: auto; }
+            .log { display: none; top: auto; bottom: 70px; left: 12px; right: 12px; width: auto; max-height: 34vh; }
+            .log.open { display: flex; }
+            .person { left: 12px; right: 12px; width: auto; bottom: 70px; }
+            .toolbar .btn-log { display: inline-block; }
+            .hint { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .bubble, .bar i, .tag { transition: none; }
+        }
+
+        /* ---------- Report bar + dock ---------- */
+        .hint { display: none; }
+
+        .dock {
+            position: absolute;
+            left: 50%; bottom: 12px;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: min(720px, calc(100vw - 24px));
+        }
+
+        .dock .toolbar { position: static; transform: none; max-width: none; }
+
+        .reportbar { display: flex; gap: 8px; width: 100%; }
+
+        .reportbar input {
+            flex: 1; min-width: 0;
+            padding: 11px 14px;
+            border: 1px solid var(--line-strong);
+            border-radius: 10px;
+            background: var(--panel);
+            color: var(--heading);
+            font: inherit;
+            font-size: 0.92rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .reportbar input::placeholder { color: var(--dim); }
+        .reportbar input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2); }
+
+        .reportbar button {
+            padding: 0 16px;
+            border: none;
+            border-radius: 10px;
+            background: var(--accent-strong);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .reportbar button:hover:not(:disabled) { background: var(--accent-press); }
+        .reportbar button:disabled { opacity: 0.5; cursor: default; }
+
+        .chips { display: flex; gap: 6px; width: 100%; overflow-x: auto; scrollbar-width: none; }
+        .chips::-webkit-scrollbar { display: none; }
+        .chips button {
+            flex-shrink: 0;
+            padding: 6px 12px;
+            border: 1px solid var(--line-strong);
+            border-radius: 999px;
+            background: var(--panel);
+            color: var(--muted);
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+        .chips button:hover { border-color: var(--accent); color: var(--accent); }
+
+        .fine { font-size: 0.72rem; color: var(--dim); text-align: center; }
+
+        .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+        .fix-wrap { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+        .fix-wrap h3 { font-family: var(--font-display); font-size: 0.82rem; color: var(--accent); margin-bottom: 6px; }
+        .fix-wrap ol { padding-left: 18px; }
+        .fix-wrap li { font-size: 0.82rem; color: var(--muted); line-height: 1.45; margin-bottom: 4px; }
+
+        .incident { max-height: calc(100vh - var(--dock-h, 120px) - 110px); overflow-y: auto; }
+        .person { bottom: calc(var(--dock-h, 120px) + 20px); }
+
+        @media (max-width: 760px) {
+            .log { bottom: calc(var(--dock-h, 120px) + 20px); }
+            .fine { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+
+    <div id="stage"></div>
+    <div id="labels" aria-hidden="false"></div>
+
+    <header class="hud-top">
+        <a class="back" href="index.html#projects">← Back to portfolio</a>
+        <div class="title">
+            <h1>Project 4: IT Operations Room</h1>
+            <p>A BPO support team handles live incidents. Drag to look around, click a person to focus.</p>
+        </div>
+    </header>
+
+    <section class="card incident" aria-live="polite">
+        <h2>Live incident</h2>
+        <div class="inc-row">
+            <span class="chip" id="inc-status">ALL SYSTEMS NORMAL</span>
+            <span class="inc-id" id="inc-id">No active incident</span>
+        </div>
+        <p class="inc-title" id="inc-title">All systems operational</p>
+        <div class="inc-stats">
+            <span>Agents affected: <strong id="inc-affected">0</strong></span>
+            <span>Recovered: <strong id="inc-pct">100%</strong></span>
+        </div>
+        <div class="bar"><i id="inc-bar"></i></div>
+        <div id="inc-fix-wrap" class="fix-wrap" hidden>
+            <h3>Suggested fix</h3>
+            <ol id="inc-fix"></ol>
+        </div>
+    </section>
+
+    <aside class="card log" id="log-card" aria-label="Incident log">
+        <h2>Incident log</h2>
+        <ul id="log-list"></ul>
+    </aside>
+
+    <section class="card person" id="person-card" hidden>
+        <button class="close" id="pc-close" type="button" aria-label="Close">✕</button>
+        <h2 id="pc-name"></h2>
+        <div class="role" id="pc-role"></div>
+        <p id="pc-desc"></p>
+        <p class="now" id="pc-now"></p>
+    </section>
+
+    <div class="dock">
+        <div class="chips" id="report-chips">
+            <button type="button">Agents can't log in</button>
+            <button type="button">Calls keep dropping</button>
+            <button type="button">Headset has no sound</button>
+            <button type="button">CRM is very slow</button>
+            <button type="button">Printer won't print</button>
+            <button type="button">Can't send email</button>
+        </div>
+
+        <form class="reportbar" id="report-form" autocomplete="off">
+            <label class="sr" for="report-input">Report an IT issue</label>
+            <input id="report-input" type="text" maxlength="300" placeholder="Describe a problem or reply to the team…">
+            <button type="submit" id="report-send">Send to IT team</button>
+        </form>
+        <p class="fine">Simulated team chat. Please don't type passwords or customer data.</p>
+
+        <nav class="toolbar" aria-label="Scene controls">
+            <button type="button" id="btn-overview">Overview</button>
+            <button type="button" id="btn-wall">Wall screen</button>
+            <button type="button" id="btn-top">Top view</button>
+            <button type="button" id="btn-rotate" aria-pressed="true">Auto-rotate</button>
+            <button type="button" id="btn-pause" aria-pressed="false">Pause story</button>
+            <button type="button" id="btn-replay">Replay</button>
+            <button type="button" id="btn-next">Next incident</button>
+            <button type="button" id="btn-discord" aria-pressed="false">Discord alerts</button>
+            <button type="button" id="btn-log" class="btn-log" aria-pressed="false">Log</button>
+        </nav>
+    </div>
+
+    <div id="fallback" hidden></div>
+    <noscript>This page needs JavaScript to show the 3D room.</noscript>
+
+</div>
+
+<script>
+window.addEventListener("load", function () {
+"use strict";
+
+const fallbackEl = document.getElementById("fallback");
+function showFallback(msg) { fallbackEl.textContent = msg; fallbackEl.hidden = false; }
+
+if (!window.THREE) {
+    showFallback("The 3D library could not load. Check your internet connection and refresh the page.");
+    return;
+}
+
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const stage = document.getElementById("stage");
+const labelsEl = document.getElementById("labels");
+
+/* ---------- Discord alerts (via your proxy) ---------- */
+const DISCORD_PROXY = "";   // e.g. "https://it-ops-discord.yourname.workers.dev"; empty = feature hidden
+let discordOn = false, lastPost = 0;
+
+function postToDiscord(title, text, color) {
+    if (!DISCORD_PROXY || !discordOn) return;
+    const now = Date.now();
+    if (now - lastPost < 4000) return;      // never spam the channel
+    lastPost = now;
+    fetch(DISCORD_PROXY, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title, text: text, color: color })
+    }).catch(function () {});
+}
+
+/* =========================================================
+   RENDERER, SCENE, CAMERA
+========================================================= */
+let renderer;
+try {
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+} catch (err) {
+    showFallback("Your browser could not start WebGL, so the 3D room cannot be shown.");
+    return;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b1120);
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 120);
+
+/* =========================================================
+   SMALL HELPERS
+========================================================= */
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function mat(color, o) {
+    o = o || {};
+    const m = new THREE.MeshStandardMaterial({
+        roughness: o.roughness !== undefined ? o.roughness : 0.75,
+        metalness: o.metalness !== undefined ? o.metalness : 0.05,
+        emissiveIntensity: o.emissiveIntensity !== undefined ? o.emissiveIntensity : 1,
+        transparent: !!o.transparent,
+        opacity: o.opacity !== undefined ? o.opacity : 1
+    });
+    m.color = new THREE.Color(color).convertSRGBToLinear();
+    if (o.emissive !== undefined) m.emissive = new THREE.Color(o.emissive).convertSRGBToLinear();
+    return m;
+}
+
+function addMesh(geo, color, x, y, z, parent, o) {
+    const m = new THREE.Mesh(geo, mat(color, o));
+    m.position.set(x || 0, y || 0, z || 0);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    if (parent) parent.add(m);
+    return m;
+}
+
+const box = (w, h, d, color, x, y, z, parent, o) => addMesh(new THREE.BoxGeometry(w, h, d), color, x, y, z, parent, o);
+const cyl = (rt, rb, h, color, x, y, z, parent, seg, o) => addMesh(new THREE.CylinderGeometry(rt, rb, h, seg || 12), color, x, y, z, parent, o);
+const sph = (r, color, x, y, z, parent, o) => addMesh(new THREE.SphereGeometry(r, 18, 14), color, x, y, z, parent, o);
+
+function makeCanvasTex(w, h) {
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const ctx = c.getContext("2d");
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    tex.anisotropy = 4;
+    return { c: c, ctx: ctx, tex: tex };
+}
+
+function rr(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+}
+
+function fit(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    while (text.length > 1 && ctx.measureText(text + "…").width > maxW) text = text.slice(0, -1);
+    return text + "…";
+}
+
+function wrap(ctx, text, x, y, maxW, lineH, maxLines) {
+    const words = text.split(" ");
+    let line = "", n = 0;
+    for (let i = 0; i < words.length; i++) {
+        const test = line ? line + " " + words[i] : words[i];
+        if (ctx.measureText(test).width > maxW && line) {
+            ctx.fillText(line, x, y + n * lineH);
+            n++;
+            line = words[i];
+            if (n >= maxLines) return;
+        } else {
+            line = test;
+        }
+    }
+    ctx.fillText(line, x, y + n * lineH);
+}
+
+const pad2 = (n) => String(n).padStart(2, "0");
+function clockStr(withSec) {
+    const d = new Date();
+    return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + (withSec ? ":" + pad2(d.getSeconds()) : "");
+}
+
+/* =========================================================
+   SHARED STATE (drives the wall, screens, HUD)
+========================================================= */
+const statusStyle = {
+    normal:        { label: "ALL SYSTEMS NORMAL", col: "#22c55e" },
+    alert:         { label: "ALERT",              col: "#ef4444" },
+    investigating: { label: "INVESTIGATING",      col: "#f59e0b" },
+    identified:    { label: "CAUSE FOUND",        col: "#f59e0b" },
+    fixing:        { label: "FIXING",             col: "#38bdf8" },
+    resolved:      { label: "RESOLVED",           col: "#22c55e" }
+};
+
+const targets = {
+    normal:        { calls: 6,  sla: 96 },
+    alert:         { calls: 48, sla: 71 },
+    investigating: { calls: 54, sla: 68 },
+    identified:    { calls: 42, sla: 72 },
+    fixing:        { calls: 22, sla: 84 },
+    resolved:      { calls: 8,  sla: 94 }
+};
+
+const S = {
+    status: "normal",
+    incId: "",
+    sev: "",
+    title: "All systems operational",
+    total: 0,
+    recovered: 1,
+    affectedNow: 0,
+    calls: 6,
+    sla: 96,
+    history: new Array(60).fill(6),
+    faulty: []
+};
+let recoverTarget = 1;
+
+/* =========================================================
+   LIGHTS
+========================================================= */
+scene.add(new THREE.HemisphereLight(0xbcd7ff, 0x1a2436, 0.85));
+
+const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+sun.position.set(6, 10, 7);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -9; sun.shadow.camera.right = 9;
+sun.shadow.camera.top = 9; sun.shadow.camera.bottom = -9;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 30;
+sun.shadow.bias = -0.0006;
+scene.add(sun);
+
+const fill = new THREE.PointLight(0x7dd3fc, 0.35, 16);
+fill.position.set(0, 3.2, 1);
+scene.add(fill);
+
+const wallLight = new THREE.PointLight(0x22c55e, 0.9, 10);
+wallLight.position.set(0, 2.3, -3.4);
+scene.add(wallLight);
+
+/* =========================================================
+   ROOM
+========================================================= */
+const floorTex = (function () {
+    const o = makeCanvasTex(256, 256);
+    o.ctx.fillStyle = "#1a2436";
+    o.ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 700; i++) {
+        o.ctx.fillStyle = "rgba(255,255,255," + (Math.random() * 0.04).toFixed(3) + ")";
+        o.ctx.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+    }
+    o.ctx.strokeStyle = "#223049";
+    o.ctx.lineWidth = 4;
+    o.ctx.strokeRect(0, 0, 256, 256);
+    o.tex.wrapS = o.tex.wrapT = THREE.RepeatWrapping;
+    o.tex.repeat.set(12, 9);
+    return o.tex;
+})();
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(12, 9), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.95 }));
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+box(12.4, 0.3, 9.4, 0x0f1726, 0, -0.16, 0, scene);
+
+// back + left walls (front and right are open so we can look in)
+box(12.4, 3.8, 0.2, 0x1b2740, 0, 1.9, -4.6, scene);
+box(0.2, 3.8, 9.4, 0x18233a, -6.1, 1.9, 0, scene);
+box(12, 0.12, 0.05, 0x0f172a, 0, 0.06, -4.475, scene);
+box(0.05, 0.12, 9, 0x0f172a, -5.975, 0.06, 0, scene);
+box(12, 0.05, 0.02, 0x38bdf8, 0, 1.1, -4.49, scene, { emissive: 0x38bdf8, emissiveIntensity: 0.6 });
+
+/* ---------- Big wall display ---------- */
+const wall = makeCanvasTex(1024, 384);
+box(6.7, 2.55, 0.12, 0x05080f, 0, 2.3, -4.44, scene);
+const wallScreen = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 2.4), new THREE.MeshBasicMaterial({ map: wall.tex, toneMapped: false }));
+wallScreen.position.set(0, 2.3, -4.375);
+scene.add(wallScreen);
+
+function drawWall() {
+    const ctx = wall.ctx, W = 1024, H = 384;
+    const st = statusStyle[S.status];
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#070b14";
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = "#0f1a2e";
+    ctx.fillRect(0, 0, W, 46);
+    ctx.fillStyle = "#38bdf8";
+    ctx.font = "700 22px Sora, Arial, sans-serif";
+    ctx.fillText("NORTHSTAR BPO  |  IT OPERATIONS CENTER", 20, 24);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "500 18px 'DM Sans', Arial, sans-serif";
+    ctx.fillText(clockStr(true), W - 20, 24);
+    ctx.textAlign = "left";
+
+    // incident card
+    rr(ctx, 20, 64, 520, 300, 14);
+    ctx.fillStyle = "#0f1a2e";
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = st.col;
+    ctx.stroke();
+
+    ctx.fillStyle = st.col;
+    rr(ctx, 40, 82, 230, 34, 17);
+    ctx.fill();
+    ctx.fillStyle = "#0b1120";
+    ctx.font = "700 17px 'DM Sans', Arial, sans-serif";
+    ctx.fillText(st.label, 56, 100);
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "500 17px 'DM Sans', Arial, sans-serif";
+    ctx.fillText(S.incId ? S.incId + "  |  " + S.sev : "No active incident", 290, 100);
+
+    ctx.fillStyle = "#f8fafc";
+    ctx.font = "700 27px 'DM Sans', Arial, sans-serif";
+    wrap(ctx, S.title, 40, 150, 480, 34, 2);
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "500 17px 'DM Sans', Arial, sans-serif";
+    ctx.fillText("Agents affected", 40, 244);
+    ctx.fillStyle = st.col;
+    ctx.font = "700 62px Sora, Arial, sans-serif";
+    ctx.fillText(String(S.affectedNow), 40, 292);
+
+    ctx.fillStyle = "#1e293b";
+    rr(ctx, 40, 330, 480, 12, 6);
+    ctx.fill();
+    ctx.fillStyle = st.col;
+    rr(ctx, 40, 330, Math.max(12, 480 * S.recovered), 12, 6);
+    ctx.fill();
+
+    // stat tiles
+    const tiles = [
+        ["Calls waiting", String(Math.round(S.calls)), S.calls > 30 ? "#ef4444" : "#f8fafc"],
+        ["SLA today", Math.round(S.sla) + "%", S.sla < 80 ? "#f59e0b" : "#22c55e"],
+        ["Agents online", String(412 - S.affectedNow), "#f8fafc"]
+    ];
+    tiles.forEach(function (t, i) {
+        const x = 560 + i * 150;
+        rr(ctx, x, 64, 138, 92, 12);
+        ctx.fillStyle = "#0f1a2e";
+        ctx.fill();
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "500 15px 'DM Sans', Arial, sans-serif";
+        ctx.fillText(t[0], x + 14, 88);
+        ctx.fillStyle = t[2];
+        ctx.font = "700 36px Sora, Arial, sans-serif";
+        ctx.fillText(t[1], x + 14, 126);
+    });
+
+    // chart
+    rr(ctx, 560, 172, 444, 192, 12);
+    ctx.fillStyle = "#0f1a2e";
+    ctx.fill();
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "500 15px 'DM Sans', Arial, sans-serif";
+    ctx.fillText("Calls waiting (last 30 s)", 576, 192);
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    for (let g = 0; g < 4; g++) {
+        const gy = 210 + g * 36;
+        ctx.beginPath(); ctx.moveTo(576, gy); ctx.lineTo(988, gy); ctx.stroke();
+    }
+    const hist = S.history, n = hist.length;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+        const px = 576 + (i / (n - 1)) * 412;
+        const py = 346 - clamp(hist[i] / 70, 0, 1) * 130;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = st.col;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.lineTo(988, 346);
+    ctx.lineTo(576, 346);
+    ctx.closePath();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = st.col;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    wall.tex.needsUpdate = true;
+}
+
+/* ---------- Server racks (left wall) ---------- */
+const racks = [];
+function buildRack(z, labels) {
+    box(0.9, 2.1, 0.75, 0x0b0f1a, -5.5, 1.05, z, scene);
+    const o = makeCanvasTex(128, 512);
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 2.0), new THREE.MeshBasicMaterial({ map: o.tex, toneMapped: false }));
+    plane.position.set(-5.045, 1.05, z);
+    plane.rotation.y = Math.PI / 2;
+    scene.add(plane);
+    const rack = {
+        draw: function () {
+            const ctx = o.ctx;
+            ctx.fillStyle = "#0b0f1a";
+            ctx.fillRect(0, 0, 128, 512);
+            for (let r = 0; r < 15; r++) {
+                const y = 6 + r * 33;
+                ctx.fillStyle = "#151e30";
+                ctx.fillRect(6, y, 116, 28);
+                const label = labels[r];
+                if (label) {
+                    ctx.fillStyle = "#94a3b8";
+                    ctx.font = "700 10px monospace";
+                    ctx.textBaseline = "middle";
+                    ctx.textAlign = "left";
+                    ctx.fillText(label.text, 12, y + 14);
+                }
+                const bad = label && S.faulty.indexOf(label.id) !== -1 &&
+                    (S.status === "alert" || S.status === "investigating" || S.status === "identified");
+                const fixing = label && S.faulty.indexOf(label.id) !== -1 && S.status === "fixing";
+                for (let k = 0; k < 4; k++) {
+                    let col = Math.random() > 0.35 ? "#22c55e" : "#14532d";
+                    if (k === 3 && bad) col = Math.random() > 0.4 ? "#ef4444" : "#7f1d1d";
+                    if (k === 3 && fixing) col = "#f59e0b";
+                    ctx.fillStyle = col;
+                    ctx.fillRect(96 + k * 6, y + 10, 4, 8);
+                }
+            }
+            o.tex.needsUpdate = true;
+        }
+    };
+    racks.push(rack);
+}
+buildRack(-3.7, { 1: { text: "CORE-SW", id: "core" }, 2: { text: "FIREWALL", id: "fw" }, 4: { text: "AUTH-01", id: "auth" }, 5: { text: "DIALER-01", id: "dialer" } });
+buildRack(-2.8, { 1: { text: "FLOOR1-SW", id: "floor1" }, 2: { text: "FLOOR2-SW", id: "floor2" }, 4: { text: "BACKUP-01", id: "backup" } });
+
+/* ---------- Network whiteboard (left wall) ---------- */
+const board = makeCanvasTex(512, 256);
+box(0.06, 1.8, 3.2, 0xcbd5e1, -5.96, 2.0, 0.6, scene);
+const boardPlane = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 1.7), new THREE.MeshBasicMaterial({ map: board.tex, toneMapped: false }));
+boardPlane.position.set(-5.925, 2.0, 0.6);
+boardPlane.rotation.y = Math.PI / 2;
+scene.add(boardPlane);
+
+const mapNodes = [
+    { id: "net",    label: "Internet",  x: 60,  y: 128 },
+    { id: "fw",     label: "Firewall",  x: 160, y: 128 },
+    { id: "core",   label: "Core SW",   x: 270, y: 128 },
+    { id: "auth",   label: "Auth",      x: 400, y: 50  },
+    { id: "dialer", label: "Dialer",    x: 440, y: 128 },
+    { id: "floor1", label: "Floor 1",   x: 400, y: 200 },
+    { id: "floor2", label: "Floor 2",   x: 300, y: 220 }
+];
+const mapLinks = [["net", "fw"], ["fw", "core"], ["core", "auth"], ["core", "dialer"], ["core", "floor1"], ["core", "floor2"]];
+
+function drawBoard() {
+    const ctx = board.ctx;
+    ctx.fillStyle = "#f1f5f9";
+    ctx.fillRect(0, 0, 512, 256);
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "700 16px Arial";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("NETWORK MAP", 14, 18);
+    const hot = (S.status === "alert" || S.status === "investigating" || S.status === "identified");
+    const col = function (id) {
+        if (S.faulty.indexOf(id) === -1) return "#16a34a";
+        if (hot) return "#dc2626";
+        if (S.status === "fixing") return "#d97706";
+        return "#16a34a";
+    };
+    ctx.lineWidth = 3;
+    mapLinks.forEach(function (l) {
+        const a = mapNodes.find(function (n) { return n.id === l[0]; });
+        const b = mapNodes.find(function (n) { return n.id === l[1]; });
+        ctx.strokeStyle = (S.faulty.indexOf(l[1]) !== -1 && hot) ? "#dc2626" : "#94a3b8";
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+    mapNodes.forEach(function (n) {
+        rr(ctx, n.x - 40, n.y - 16, 80, 32, 8);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = col(n.id);
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "700 13px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(n.label, n.x, n.y);
+    });
+    ctx.textAlign = "left";
+    board.tex.needsUpdate = true;
+}
+
+/* ---------- Plant ---------- */
+(function () {
+    const g = new THREE.Group();
+    g.position.set(5.2, 0, 3.6);
+    scene.add(g);
+    cyl(0.28, 0.22, 0.45, 0x334155, 0, 0.22, 0, g, 14);
+    sph(0.32, 0x15803d, 0, 0.8, 0, g);
+    sph(0.24, 0x16a34a, 0.18, 1.05, 0.05, g);
+    sph(0.22, 0x166534, -0.15, 1.0, -0.08, g);
+})();
+
+/* =========================================================
+   MONITOR SCREEN FEEDS
+========================================================= */
+function feedBase(ctx, w, h, title) {
+    ctx.fillStyle = "#0b1220";
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#0f1a2e";
+    ctx.fillRect(0, 0, w, 22);
+    ctx.fillStyle = "#38bdf8";
+    ctx.font = "700 11px Sora, Arial, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillText(title, 8, 12);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "500 10px Arial";
+    ctx.fillText(clockStr(false), w - 8, 12);
+    ctx.textAlign = "left";
+}
+
+const fakeTickets = [
+    ["INC-48190", "Printer queue stuck, Floor 3", "Closed"],
+    ["INC-48201", "Password reset for new hire", "Closed"],
+    ["INC-48205", "Slow CRM on Floor 1", "Open"],
+    ["INC-48212", "Headset not detected, seat 24", "Open"]
+];
+
+function drawTickets(ctx, w, h) {
+    feedBase(ctx, w, h, "SERVICE DESK");
+    const rows = [];
+    if (S.status !== "normal") rows.push([S.incId, S.title, statusStyle[S.status].label, statusStyle[S.status].col]);
+    fakeTickets.forEach(function (t) { rows.push([t[0], t[1], t[2], t[2] === "Open" ? "#f59e0b" : "#22c55e"]); });
+    rows.slice(0, 5).forEach(function (r, i) {
+        const y = 30 + i * 30;
+        ctx.fillStyle = i === 0 && S.status !== "normal" ? "#1e293b" : "#111a2b";
+        ctx.fillRect(6, y, w - 12, 26);
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "500 9px monospace";
+        ctx.fillText(r[0], 12, y + 8);
+        ctx.fillStyle = "#f8fafc";
+        ctx.font = "500 10px Arial";
+        ctx.fillText(fit(ctx, r[1], 190), 12, y + 19);
+        ctx.fillStyle = r[3];
+        ctx.font = "700 9px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(r[2], w - 12, y + 13);
+        ctx.textAlign = "left";
+    });
+}
+
+const termLines = [];
+function drawTerminal(ctx, w, h) {
+    feedBase(ctx, w, h, "SERVER CONSOLE");
+    ctx.font = "10px monospace";
+    const start = Math.max(0, termLines.length - 13);
+    for (let i = start; i < termLines.length; i++) {
+        const l = termLines[i];
+        const bad = /ERROR|FAIL|STOPPED|refused|loss|flap|dead|timeout/i.test(l);
+        const good = /OK|healthy|online|listening|stable/i.test(l);
+        ctx.fillStyle = bad ? "#f87171" : good ? "#4ade80" : "#86b9a0";
+        ctx.fillText(fit(ctx, l, w - 14), 7, 34 + (i - start) * 12);
+    }
+}
+
+const cpuHist = new Array(50).fill(30);
+const latHist = new Array(50).fill(20);
+function drawGraph(ctx, w, h) {
+    feedBase(ctx, w, h, "SERVER HEALTH");
+    const hot = (S.status === "alert" || S.status === "investigating" || S.status === "identified");
+    [[cpuHist, hot ? "#f87171" : "#38bdf8", "CPU"], [latHist, hot ? "#fbbf24" : "#4ade80", "Latency"]].forEach(function (s, k) {
+        const top = 30 + k * 76, hh = 66;
+        ctx.fillStyle = "#111a2b";
+        ctx.fillRect(6, top, w - 12, hh);
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "700 9px Arial";
+        ctx.fillText(s[2], 12, top + 9);
+        ctx.beginPath();
+        s[0].forEach(function (v, i) {
+            const px = 10 + (i / (s[0].length - 1)) * (w - 20);
+            const py = top + hh - 6 - clamp(v / 100, 0, 1) * (hh - 22);
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        });
+        ctx.strokeStyle = s[1];
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    });
+}
+
+function drawAgents(ctx, w, h, t) {
+    feedBase(ctx, w, h, "AGENT STATUS");
+    const cols = 12, rows = 8;
+    const bad = Math.min(cols * rows, S.affectedNow);
+    for (let i = 0; i < cols * rows; i++) {
+        const cx = 26 + (i % cols) * 24, cy = 40 + Math.floor(i / cols) * 19;
+        let c = "#22c55e";
+        if (i < bad) c = S.status === "fixing" ? "#f59e0b" : (Math.sin(t * 6 + i) > -0.6 ? "#ef4444" : "#7f1d1d");
+        ctx.fillStyle = c;
+        ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "500 10px Arial";
+    ctx.fillText("Affected: " + S.affectedNow + "    Online: " + (96 - bad) + " of 96 shown", 10, h - 10);
+}
+
+function drawKpi(ctx, w, h) {
+    feedBase(ctx, w, h, "OPS DASHBOARD");
+    const st = statusStyle[S.status];
+    const items = [["SLA", Math.round(S.sla) + "%", S.sla < 80 ? "#f59e0b" : "#22c55e"],
+                   ["Calls waiting", String(Math.round(S.calls)), S.calls > 30 ? "#ef4444" : "#f8fafc"],
+                   ["Open P1", (S.status === "normal" || S.status === "resolved") ? "0" : "1", "#f8fafc"]];
+    items.forEach(function (it, i) {
+        const x = 8 + i * 104;
+        ctx.fillStyle = "#111a2b";
+        ctx.fillRect(x, 32, 98, 70);
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "500 10px Arial";
+        ctx.fillText(it[0], x + 8, 46);
+        ctx.fillStyle = it[2];
+        ctx.font = "700 26px Sora, Arial, sans-serif";
+        ctx.fillText(it[1], x + 8, 80);
+    });
+    ctx.fillStyle = st.col;
+    rr(ctx, 8, 118, w - 16, 52, 8);
+    ctx.globalAlpha = 0.18; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = st.col; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = st.col;
+    ctx.font = "700 13px Arial";
+    ctx.fillText(st.label, 18, 136);
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "500 10px Arial";
+    ctx.fillText(fit(ctx, S.title, w - 40), 18, 156);
+}
+
+const feedDrawers = { tickets: drawTickets, terminal: drawTerminal, graph: drawGraph, agents: drawAgents, kpi: drawKpi };
+const allFeeds = [];
+
+function makeFeed(kind) {
+    const o = makeCanvasTex(320, 186);
+    const feed = {
+        tex: o.tex,
+        update: function (t) { feedDrawers[kind](o.ctx, 320, 186, t); o.tex.needsUpdate = true; }
+    };
+    allFeeds.push(feed);
+    return feed;
+}
+
+/* =========================================================
+   PEOPLE + WORKSTATIONS
+========================================================= */
+const CAST = [
+    {
+        key: "support", name: "Jec", role: "IT Support", short: "Support (Jec)",
+        pos: [-3.1, 0.9], yaw: Math.PI, shirt: 0x0369a1, skin: 0xe0ac84, hair: 0x1a1a1a, hairLong: true,
+        chair: 0x1e293b, feeds: ["tickets"], headset: true,
+        desc: "First line of help. Answers calls from agents, opens tickets, tries the basic fixes, and escalates when the problem is bigger."
+    },
+    {
+        key: "support2", name: "Adi", role: "IT Support", short: "Support (Adi)",
+        pos: [-2.0, 3.2], yaw: Math.PI, shirt: 0x0e7490, skin: 0xd9a47a, hair: 0x2b1b12,
+        chair: 0x1e293b, feeds: ["tickets"], headset: true,
+        desc: "Second support desk. Checks agent devices, tests fixes on the floor, and backs up the first-line support with tickets and calls."
+    },
+    {
+        key: "admin", name: "Anton", role: "IT Administrator", short: "Administrator",
+        pos: [-0.5, 0.9], yaw: Math.PI, shirt: 0x6d28d9, skin: 0xc68642, hair: 0x111111, glasses: true,
+        chair: 0x1e293b, feeds: ["terminal", "graph"],
+        desc: "Looks after the servers, the network, and the dialer. Finds the root cause of an outage and applies the fix."
+    },
+    {
+        key: "supervisor", name: "Ders", role: "IT Supervisor", short: "Supervisor",
+        pos: [2.2, 0.9], yaw: Math.PI, shirt: 0x0f766e, skin: 0xe8b996, hair: 0x3b2314, hairLong: true,
+        chair: 0x1e293b, feeds: ["agents"],
+        desc: "Runs the IT shift. Assigns incidents, watches the SLA, and keeps the call center floor supervisors updated."
+    },
+    {
+        key: "manager", name: "Orly", role: "IT Manager", short: "Manager",
+        pos: [4.6, -1.8], yaw: -Math.PI / 2, shirt: 0x334155, skin: 0xd9a47a, hair: 0x1f1f1f, tie: true,
+        chair: 0x111827, feeds: ["kpi"],
+        desc: "Owns IT service for the whole company. Sets priorities, talks with operations leaders, and approves the fix."
+    }
+];
+
+const poseLabels = { type: "Working on the computer", phone: "On a call", point: "Briefing the team at the wall screen" };
+const people = {};
+
+function solveArm(arm, ty, tz) {
+    const L = 0.32, sy = 0.55;
+    const dy = ty - sy, dz = tz;
+    let d = Math.hypot(dy, dz);
+    d = clamp(d, 0.05, 2 * L * 0.995);
+    const tt = Math.atan2(dz, -dy);
+    const b = Math.acos(d / (2 * L));
+    arm.upper.rotation.x = -(tt - b);
+    arm.elbow.rotation.x = -2 * b;
+}
+
+function buildStation(cfg) {
+    const g = new THREE.Group();
+    g.position.set(cfg.pos[0], 0, cfg.pos[1]);
+    g.rotation.y = cfg.yaw;
+    g.userData.personKey = cfg.key;
+    scene.add(g);
+
+    const p = {
+        cfg: cfg, key: cfg.key, group: g,
+        pose: "type", look: null, speaking: false,
+        yaw: 0, pitch: 0.12,
+        rT: new THREE.Vector2(0.31, 0.55), lT: new THREE.Vector2(0.31, 0.55),
+        seed: Math.random() * 10
+    };
+
+    // desk
+    box(1.9, 0.05, 0.85, 0x2b3b55, 0, 0.75, 0.98, g);
+    box(0.05, 0.72, 0.8, 0x1c2638, -0.9, 0.36, 0.98, g);
+    box(0.05, 0.72, 0.8, 0x1c2638, 0.9, 0.36, 0.98, g);
+    box(1.8, 0.45, 0.03, 0x1c2638, 0, 0.5, 1.38, g);
+    box(0.46, 0.02, 0.15, 0x0f172a, 0, 0.785, 0.62, g);
+    box(0.06, 0.025, 0.1, 0x0f172a, 0.38, 0.787, 0.66, g);
+    cyl(0.04, 0.035, 0.09, 0xf8fafc, -0.7, 0.82, 1.0, g, 12);
+
+    // monitors
+    const n = cfg.feeds.length;
+    cfg.feeds.forEach(function (kind, i) {
+        const m = new THREE.Group();
+        m.position.set(n === 1 ? 0 : (i === 0 ? -0.42 : 0.42), 0.775, 1.22);
+        m.rotation.y = n === 1 ? 0 : (i === 0 ? -0.22 : 0.22);
+        g.add(m);
+        cyl(0.025, 0.03, 0.22, 0x0f172a, 0, 0.11, 0, m, 10);
+        box(0.22, 0.012, 0.14, 0x0f172a, 0, 0.006, 0, m);
+        box(0.68, 0.4, 0.03, 0x0b0f1a, 0, 0.34, 0, m);
+        const feed = makeFeed(kind);
+        const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.34), new THREE.MeshBasicMaterial({ map: feed.tex, toneMapped: false }));
+        scr.position.set(0, 0.34, -0.0165);
+        scr.rotation.y = Math.PI;
+        m.add(scr);
+    });
+
+    // chair
+    box(0.54, 0.08, 0.52, cfg.chair, 0, 0.45, -0.02, g);
+    box(0.5, 0.62, 0.07, cfg.chair, 0, 0.82, -0.3, g);
+    cyl(0.035, 0.035, 0.38, 0x0f172a, 0, 0.22, -0.02, g, 8);
+    cyl(0.3, 0.3, 0.035, 0x0f172a, 0, 0.03, -0.02, g, 5);
+
+    // legs
+    [-1, 1].forEach(function (s) {
+        box(0.17, 0.15, 0.46, 0x1e293b, s * 0.11, 0.56, 0.2, g);
+        box(0.14, 0.46, 0.14, 0x1e293b, s * 0.11, 0.3, 0.43, g);
+        box(0.14, 0.07, 0.26, 0x0b0f1a, s * 0.11, 0.04, 0.5, g);
+    });
+    box(0.4, 0.16, 0.28, 0x1e293b, 0, 0.55, -0.02, g);
+
+    // upper body
+    const up = new THREE.Group();
+    up.position.set(0, 0.52, -0.02);
+    g.add(up);
+    p.up = up;
+    box(0.44, 0.56, 0.26, cfg.shirt, 0, 0.3, 0, up);
+    if (cfg.tie) box(0.05, 0.26, 0.02, 0xdc2626, 0, 0.33, 0.135, up);
+
+    // head
+    const head = new THREE.Group();
+    head.position.set(0, 0.6, 0);
+    head.rotation.order = "YXZ";
+    up.add(head);
+    p.head = head;
+    cyl(0.05, 0.055, 0.1, cfg.skin, 0, 0.03, 0, head, 10);
+    const hd = sph(0.14, cfg.skin, 0, 0.2, 0, head);
+    hd.scale.set(1, 1.1, 1);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.152, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat(cfg.hair));
+    hair.position.set(0, 0.215, -0.012);
+    hair.scale.set(1, 1.05, 1.02);
+    hair.castShadow = true;
+    head.add(hair);
+    if (cfg.hairLong) box(0.3, 0.3, 0.09, cfg.hair, 0, 0.12, -0.1, head);
+    sph(0.017, 0x0b0f1a, -0.05, 0.215, 0.128, head);
+    sph(0.017, 0x0b0f1a, 0.05, 0.215, 0.128, head);
+    p.mouth = box(0.05, 0.012, 0.01, 0xb4534b, 0, 0.15, 0.138, head);
+
+    if (cfg.glasses) {
+        [-1, 1].forEach(function (s) {
+            const r = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.004, 6, 14), mat(0x0b0f1a));
+            r.position.set(s * 0.05, 0.215, 0.14);
+            head.add(r);
+        });
+        box(0.04, 0.004, 0.004, 0x0b0f1a, 0, 0.222, 0.14, head);
+    }
+
+    if (cfg.headset) {
+        const band = new THREE.Mesh(new THREE.TorusGeometry(0.158, 0.012, 6, 20, Math.PI), mat(0x0f172a));
+        band.position.set(0, 0.2, 0);
+        head.add(band);
+        [-1, 1].forEach(function (s) {
+            const cup = cyl(0.04, 0.04, 0.03, 0x0f172a, s * 0.155, 0.2, 0, head, 12);
+            cup.rotation.z = Math.PI / 2;
+        });
+        box(0.012, 0.012, 0.13, 0x0f172a, 0.15, 0.17, 0.065, head);
+        sph(0.015, 0x0f172a, 0.15, 0.17, 0.13, head);
+    }
+
+    // arms
+    p.arms = [-1, 1].map(function (s) {
+        const sh = new THREE.Group();
+        sh.position.set(s * 0.27, 0.55, 0);
+        up.add(sh);
+        box(0.12, 0.12, 0.12, cfg.shirt, 0, 0, 0, sh);
+        const upper = new THREE.Group();
+        sh.add(upper);
+        box(0.095, 0.33, 0.095, cfg.shirt, 0, -0.16, 0, upper);
+        const elbow = new THREE.Group();
+        elbow.position.set(0, -0.32, 0);
+        upper.add(elbow);
+        box(0.08, 0.33, 0.08, cfg.skin, 0, -0.16, 0, elbow);
+        sph(0.05, cfg.skin, 0, -0.35, 0, elbow);
+        return { upper: upper, elbow: elbow, side: s };
+    });
+
+    // floating name tag + speech bubble (HTML)
+    const wrapEl = document.createElement("div");
+    wrapEl.className = "tag-wrap";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    const tag = document.createElement("button");
+    tag.type = "button";
+    tag.className = "tag";
+    tag.innerHTML = "<b></b><span></span>";
+    tag.firstChild.textContent = cfg.name;
+    tag.lastChild.textContent = cfg.role;
+    tag.addEventListener("click", function () { select(cfg.key); });
+    wrapEl.appendChild(bubble);
+    wrapEl.appendChild(tag);
+    labelsEl.appendChild(wrapEl);
+    p.wrapEl = wrapEl; p.bubble = bubble; p.tag = tag;
+
+    return p;
+}
+
+CAST.forEach(function (cfg) { people[cfg.key] = buildStation(cfg); });
+const peopleList = CAST.map(function (c) { return people[c.key]; });
+
+// selection ring on the floor
+const selRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.85, 0.93, 40),
+    new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85, side: THREE.DoubleSide })
+);
+selRing.rotation.x = -Math.PI / 2;
+selRing.position.y = 0.02;
+selRing.visible = false;
+scene.add(selRing);
+
+/* ---------- per-frame people animation ---------- */
+const wallLook = new THREE.Vector3(0, 2.3, -4.4);
+const tmpV = new THREE.Vector3();
+
+const TYPE_T = { y: 0.31, z: 0.55 };
+const PHONE_T = { y: 0.78, z: 0.1 };
+const POINT_T = { y: 1.0, z: 0.62 };
+
+function animatePeople(dt, t) {
+    peopleList.forEach(function (p) {
+        const k = Math.min(1, dt * 6);
+
+        // head: look at a person, the wall, or the own screen
+        let wantYaw = 0, wantPitch = 0.14;
+        if (p.look) {
+            if (p.look === "wall") tmpV.copy(wallLook);
+            else people[p.look].group.localToWorld(tmpV.set(0, 1.3, 0));
+            p.group.worldToLocal(tmpV);
+            wantYaw = clamp(Math.atan2(tmpV.x, tmpV.z), -1.15, 1.15);
+            const dist = Math.hypot(tmpV.x, tmpV.z);
+            wantPitch = clamp(Math.atan2(1.3 - tmpV.y, dist), -0.4, 0.5);
+        }
+        if (p.speaking) wantPitch += Math.sin(t * 7 + p.seed) * 0.03;
+        p.yaw += (wantYaw - p.yaw) * k;
+        p.pitch += (wantPitch - p.pitch) * k;
+        p.head.rotation.set(p.pitch, p.yaw, 0);
+        p.up.rotation.y = p.yaw * 0.35;
+        p.up.rotation.x = Math.sin(t * 1.4 + p.seed) * 0.012;
+
+        // mouth
+        p.mouth.scale.y = p.speaking ? 0.6 + 1.8 * Math.abs(Math.sin(t * 12 + p.seed)) : 1;
+
+        // arms: right arm depends on the pose, left arm keeps typing
+        let rt = TYPE_T;
+        if (p.pose === "phone") rt = PHONE_T;
+        else if (p.pose === "point") rt = POINT_T;
+
+        const wig = p.pose === "type" ? 1 : 0.4;
+        const rY = rt.y + Math.sin(t * 11 + p.seed) * 0.008 * (p.pose === "type" ? 1 : 0);
+        const rZ = rt.z + Math.sin(t * 9 + p.seed * 2) * 0.012 * (p.pose === "type" ? 1 : 0);
+        p.rT.x += (rY - p.rT.x) * k;
+        p.rT.y += (rZ - p.rT.y) * k;
+        p.lT.x = TYPE_T.y + Math.sin(t * 10 + p.seed + 1.7) * 0.008 * wig;
+        p.lT.y = TYPE_T.z + Math.sin(t * 8.5 + p.seed * 3) * 0.012 * wig;
+
+        solveArm(p.arms[1], p.rT.x, p.rT.y);
+        solveArm(p.arms[0], p.lT.x, p.lT.y);
+        p.arms[1].upper.rotation.z = -0.06;
+        p.arms[0].upper.rotation.z = 0.06;
+    });
+}
+
+/* =========================================================
+   STORY: demo scenarios, steps, log
+========================================================= */
+const DEFAULT_TERM = {
+    normal: ["auth-svc: healthy", "dialer: 412 agents online", "sip-trunk-1: registered", "backup-job: completed OK", "core-sw: all ports up"]
+};
+
+const scenarios = [
+    {
+        id: "INC-48217", sev: "P1", title: "Floor 2 agents cannot log in to the dialer", affected: 86,
+        faulty: ["auth", "dialer", "floor2"],
+        term: {
+            alert:         ["auth-svc: ERROR timeout", "dialer: login FAILED x86", "ldap: connection refused", "sip-trunk-1: registered"],
+            investigating: ["dialer: login FAILED x86", "ldap: connection refused", "auth-svc: ERROR timeout"],
+            identified:    ["$ systemctl status auth-svc", "Active: inactive (dead)", "auth-svc: STOPPED after patch KB-2291"],
+            fixing:        ["$ systemctl restart auth-svc", "auth-svc: starting...", "auth-svc: listening on :636 OK", "dialer: agents reconnecting"],
+            resolved:      ["auth-svc: healthy", "dialer: 412 agents online", "incident resolved OK"]
+        },
+        steps: [
+            { d: 6.5, status: "alert", who: "support", say: "Floor 2 cannot log in to the dialer! 86 agents are waiting.", log: "Floor 2 team lead called: agents cannot log in to the dialer.", poses: { support: "phone" }, looks: { admin: "support", supervisor: "support", support2: "support" }, recover: 0 },
+            { d: 6, status: "investigating", who: "support", say: "I opened INC-48217 as P1 and I'm escalating it to the supervisor.", log: "Jec opened INC-48217 (P1) and escalated it.", looks: { support: "supervisor", support2: "support" } },
+            { d: 6.5, who: "supervisor", say: "Copy that. Anton, please check the login server. I'll update the floor.", log: "Supervisor asked the Administrator to check the login server.", poses: { supervisor: "point" }, looks: { supervisor: "admin", admin: "supervisor" } },
+            { d: 6, who: "support2", say: "I'll pull the list of affected Floor 2 agents for Anton.", log: "Adi pulled the list of affected Floor 2 agents.", looks: { support2: "admin", admin: "support2" } },
+            { d: 6.5, status: "identified", who: "admin", say: "Found it. The login service stopped after last night's patch.", log: "Administrator found the login service had stopped after the patch." },
+            { d: 6.5, who: "manager", say: "Fix it now. I'll tell operations to expect a 10-minute delay.", log: "IT Manager told operations to expect a 10-minute delay.", poses: { manager: "phone" }, looks: { admin: "manager" } },
+            { d: 7.5, status: "fixing", who: "admin", say: "Restarting the login service. Agents are reconnecting now.", log: "Administrator restarted the login service.", recover: 1 },
+            { d: 6.5, status: "resolved", who: "support", say: "Floor 2 confirms everyone is logged in again.", log: "Floor 2 confirmed logins work. INC-48217 resolved.", poses: { support: "phone" } },
+            { d: 6, who: "manager", say: "Great teamwork. Please add a post-incident note.", log: "IT Manager asked for a post-incident note.", poses: { manager: "point" }, looks: { manager: "wall" } }
+        ]
+    },
+    {
+        id: "INC-48230", sev: "P2", title: "Calls keep dropping on Floor 1", affected: 34,
+        faulty: ["floor1", "core"],
+        term: {
+            alert:         ["sip: RTP timeout on 34 calls", "vlan20: packet loss 18%", "softphone: reconnect loop"],
+            investigating: ["headset check: devices OK", "vlan20: packet loss 18%", "softphone: reconnect loop"],
+            identified:    ["floor1-sw port 14: flapping", "port 14: link down/up x41", "vlan20: packet loss 18%"],
+            fixing:        ["port 14: shutdown", "uplink cable replaced", "port 14: no shutdown OK", "vlan20: packet loss 0%"],
+            resolved:      ["vlan20: stable", "sip: 34 calls healthy OK", "incident resolved OK"]
+        },
+        steps: [
+            { d: 6.5, status: "alert", who: "support", say: "Floor 1 says calls keep dropping. 34 agents are affected.", log: "Floor 1 reported dropped calls for 34 agents.", poses: { support: "phone" }, looks: { admin: "support", support2: "support" }, recover: 0 },
+            { d: 6, status: "investigating", who: "support", say: "I logged INC-48230 and I'm checking the softphones. Adi, can you test the headsets?", log: "Jec logged INC-48230 and checked the softphones.", looks: { support: "support2", support2: "support" } },
+            { d: 6.5, who: "support2", say: "I tested three headsets on Floor 1. Same drops, so it's not the headsets.", log: "Adi tested headsets on Floor 1: same drops, so not a headset issue.", looks: { support2: "support", support: "support2" } },
+            { d: 6, who: "admin", say: "It may be the network. I'm checking the switches now.", log: "Administrator started checking the network switches.", looks: { support: "admin", support2: "admin" } },
+            { d: 6.5, status: "identified", who: "admin", say: "A switch port on Floor 1 keeps flapping. Packet loss is 18%.", log: "Administrator found a flapping switch port on Floor 1." },
+            { d: 6.5, who: "supervisor", say: "Move the affected agents to backup seats while we fix it.", log: "Supervisor moved affected agents to backup seats.", poses: { supervisor: "point" }, looks: { supervisor: "wall" } },
+            { d: 7.5, status: "fixing", who: "admin", say: "Replacing the uplink cable and resetting the port.", log: "Administrator replaced the uplink cable and reset the port.", recover: 1 },
+            { d: 6.5, status: "resolved", who: "support", say: "Calls are stable. No more drops on Floor 1.", log: "Floor 1 confirmed calls are stable. INC-48230 resolved.", poses: { support: "phone" } },
+            { d: 6, who: "manager", say: "Good. Please log the root cause before the shift ends.", log: "IT Manager asked for the root cause to be logged.", poses: { manager: "phone" }, looks: { admin: "manager" } }
+        ]
+    }
+];
+
+const logList = document.getElementById("log-list");
+function addLog(who, msg, isSep) {
+    const li = document.createElement("li");
+    if (isSep) {
+        li.className = "sep";
+        li.textContent = msg;
+    } else {
+        const tm = document.createElement("time");
+        tm.textContent = clockStr(false);
+        const b = document.createElement("b");
+        b.textContent = who + ": ";
+        li.appendChild(tm);
+        li.appendChild(b);
+        li.appendChild(document.createTextNode(msg));
+    }
+    logList.appendChild(li);
+    while (logList.children.length > 60) logList.removeChild(logList.firstChild);
+    logList.scrollTop = logList.scrollHeight;
+}
+
+let scenIdx = -1, curSc = null, lastSc = null, stepIdx = -1, stepT = 0, idleT = 1.5;
+let inIdle = true, paused = false, busy = false, holding = false, holdT = 0, userMode = false;
+const chatHistory = [];
+
+const fixWrap = document.getElementById("inc-fix-wrap");
+const fixEl = document.getElementById("inc-fix");
+
+function setupFix(sc) {
+    fixEl.innerHTML = "";
+    (sc.fix || []).forEach(function (f) {
+        const li = document.createElement("li");
+        li.textContent = f;
+        fixEl.appendChild(li);
+    });
+    fixWrap.hidden = true;
+}
+
+function maybeRevealFix() {
+    const late = S.status === "identified" || S.status === "fixing" || S.status === "resolved";
+    if (late && curSc && curSc.fix && curSc.fix.length) fixWrap.hidden = false;
+}
+
+function resetPeople() {
+    peopleList.forEach(function (p) {
+        p.pose = "type"; p.look = null; p.speaking = false;
+        p.bubble.classList.remove("show");
+    });
+}
+
+function setIdle() {
+    inIdle = true; holding = false; curSc = null; stepIdx = -1;
+    idleT = userMode ? 1e9 : 6;      // after a user report, wait for the next one
+    S.status = "normal"; S.incId = ""; S.sev = ""; S.title = "All systems operational";
+    S.total = 0; S.recovered = 1; recoverTarget = 1; S.faulty = [];
+    fixWrap.hidden = true;
+    resetPeople();
+}
+
+function playScenario(sc) {
+    curSc = sc; lastSc = sc; inIdle = false; holding = false;
+    S.incId = sc.id; S.sev = sc.sev; S.title = sc.title; S.total = sc.affected;
+    S.recovered = 0; recoverTarget = 0; S.faulty = sc.faulty || [];
+    setupFix(sc);
+    addLog("", "New incident " + sc.id + " (" + sc.sev + ")", true);
+    applyStep(0);
+}
+
+function startScenario(i) {
+    scenIdx = ((i % scenarios.length) + scenarios.length) % scenarios.length;
+    playScenario(scenarios[scenIdx]);
+}
+
+function stepDuration(say) {
+    return clamp(3 + String(say || "").length * 0.05, 4, 10);
+}
+
+function applyStep(i) {
+    const st = curSc.steps[i];
+    stepIdx = i; stepT = 0; holding = false;
+    if (st.status) S.status = st.status;
+    if (st.recover !== undefined) recoverTarget = st.recover;
+    else if (st.status === "fixing" || st.status === "resolved") recoverTarget = 1;
+
+    resetPeople();
+    // everyone else turns to look at whoever is speaking, unless the step says otherwise
+    peopleList.forEach(function (p) { if (p.key !== st.who) p.look = st.who; });
+    Object.keys(st.poses || {}).forEach(function (k) { people[k].pose = st.poses[k]; });
+    Object.keys(st.looks || {}).forEach(function (k) { people[k].look = st.looks[k]; });
+
+    const speaker = people[st.who];
+    speaker.speaking = true;
+    speaker.bubble.textContent = st.say;
+    speaker.bubble.classList.add("show");
+    addLog(speaker.cfg.short, st.log || st.say);
+
+    if (st.cmd) termLines.push(clockStr(true) + " $ " + st.cmd);
+    chatHistory.push({ who: speaker.cfg.name, text: st.say });
+    if (chatHistory.length > 30) chatHistory.shift();
+    maybeRevealFix();
+    if (st.status && typeof postToDiscord === "function") {
+        postToDiscord(S.incId + " · " + statusStyle[S.status].label, S.title + "\n" + speaker.cfg.short + ": " + (st.log || st.say), parseInt(statusStyle[S.status].col.slice(1), 16));
+    }
+}
+
+function updateStory(dt) {
+    if (paused || busy) return;
+    if (inIdle) {
+        idleT -= dt;
+        if (idleT <= 0) startScenario(scenIdx + 1);
+        return;
+    }
+    if (holding) {
+        holdT -= dt;
+        if (holdT <= 0) setIdle();
+        return;
+    }
+    stepT += dt;
+    const st = curSc.steps[stepIdx];
+    if (stepT >= (st.d || stepDuration(st.say))) {
+        if (stepIdx + 1 < curSc.steps.length) applyStep(stepIdx + 1);
+        else if (curSc.user) { holding = true; holdT = 30; resetPeople(); }   // stay open for follow-ups
+        else setIdle();
+    }
+}
+
+/* =========================================================
+   VISUAL REFRESH (screens, wall, HUD) a few times per second
+========================================================= */
+const hud = {
+    status: document.getElementById("inc-status"),
+    id: document.getElementById("inc-id"),
+    title: document.getElementById("inc-title"),
+    affected: document.getElementById("inc-affected"),
+    pct: document.getElementById("inc-pct"),
+    bar: document.getElementById("inc-bar")
+};
+
+function updateHUD() {
+    const st = statusStyle[S.status];
+    hud.status.textContent = st.label;
+    hud.status.style.background = st.col;
+    hud.id.textContent = S.incId ? S.incId + " · " + S.sev : "No active incident";
+    hud.title.textContent = S.title;
+    hud.affected.textContent = S.affectedNow;
+    const pct = Math.round(S.recovered * 100);
+    hud.pct.textContent = pct + "%";
+    hud.bar.style.width = pct + "%";
+    hud.bar.style.background = st.col;
+
+    if (selected) {
+        const p = people[selected];
+        document.getElementById("pc-now").textContent = "Right now: " + (p.speaking ? "talking, " : "") + poseLabels[p.pose].toLowerCase() + ".";
+    }
+}
+
+function updateStatusSmoothing(dt) {
+    const tg = targets[S.status];
+    S.calls += (tg.calls - S.calls) * Math.min(1, dt * 0.6);
+    S.sla += (tg.sla - S.sla) * Math.min(1, dt * 0.6);
+    S.recovered += (recoverTarget - S.recovered) * Math.min(1, dt * 0.35);
+    S.affectedNow = Math.round(S.total * (1 - S.recovered));
+    const col = new THREE.Color(statusStyle[S.status].col).convertSRGBToLinear();
+    wallLight.color.lerp(col, Math.min(1, dt * 3));
+}
+
+let visT = 0, termT = 0, histT = 0;
+function refreshVisuals(dt, t) {
+    termT += dt; histT += dt; visT += dt;
+
+    if (histT > 0.5) {
+        histT = 0;
+        S.history.push(S.calls + (Math.random() - 0.5) * 4);
+        S.history.shift();
+        const hot = (S.status === "alert" || S.status === "investigating" || S.status === "identified");
+        cpuHist.push(hot ? 75 + Math.random() * 20 : 25 + Math.random() * 12);
+        cpuHist.shift();
+        latHist.push(hot ? 55 + Math.random() * 30 : 15 + Math.random() * 10);
+        latHist.shift();
+    }
+
+    if (termT > 0.8) {
+        termT = 0;
+        const pool = (curSc && curSc.term && curSc.term[S.status]) || DEFAULT_TERM.normal;
+        termLines.push(clockStr(true) + " " + pool[Math.floor(Math.random() * pool.length)]);
+        if (termLines.length > 40) termLines.shift();
+    }
+
+    if (visT > 0.2) {
+        visT = 0;
+        drawWall();
+        drawBoard();
+        racks.forEach(function (r) { r.draw(); });
+        allFeeds.forEach(function (f) { f.update(t); });
+        updateHUD();
+    }
+}
+
+/* =========================================================
+   CAMERA: orbit, tween, presets, picking
+========================================================= */
+const OVERVIEW = { tx: 0.8, ty: 1.0, tz: -1.0, theta: 0.5, phi: 1.05, radius: 15 };
+const orbit = { target: new THREE.Vector3(OVERVIEW.tx, OVERVIEW.ty, OVERVIEW.tz), theta: OVERVIEW.theta, phi: OVERVIEW.phi, radius: OVERVIEW.radius };
+let tween = null, lastInteract = -999, autoRotate = !reduceMotion, rotDir = 1, selected = null;
+
+function applyOrbit() {
+    const o = orbit;
+    camera.position.set(
+        o.target.x + o.radius * Math.sin(o.phi) * Math.sin(o.theta),
+        o.target.y + o.radius * Math.cos(o.phi),
+        o.target.z + o.radius * Math.sin(o.phi) * Math.cos(o.theta)
+    );
+    camera.lookAt(o.target);
+    camera.updateMatrixWorld();
+}
+
+function flyTo(goal, dur) {
+    const from = { tx: orbit.target.x, ty: orbit.target.y, tz: orbit.target.z, theta: orbit.theta, phi: orbit.phi, radius: orbit.radius };
+    let dTheta = goal.theta - from.theta;
+    dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
+    tween = {
+        from: from,
+        to: { tx: goal.tx, ty: goal.ty, tz: goal.tz, theta: from.theta + dTheta, phi: goal.phi, radius: goal.radius },
+        el: 0,
+        dur: reduceMotion ? 0.01 : (dur || 1.1)
+    };
+}
+
+function updateTween(dt) {
+    if (!tween) return;
+    tween.el += dt;
+    const k = Math.min(1, tween.el / tween.dur);
+    const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    const a = tween.from, b = tween.to;
+    orbit.target.set(a.tx + (b.tx - a.tx) * e, a.ty + (b.ty - a.ty) * e, a.tz + (b.tz - a.tz) * e);
+    orbit.theta = a.theta + (b.theta - a.theta) * e;
+    orbit.phi = a.phi + (b.phi - a.phi) * e;
+    orbit.radius = a.radius + (b.radius - a.radius) * e;
+    if (k >= 1) tween = null;
+}
+
+function updateAutoRotate(dt, now) {
+    if (!autoRotate || tween || selected || now - lastInteract < 3500) return;
+    orbit.theta += rotDir * dt * 0.07;
+    if (orbit.theta > 1.0) rotDir = -1;
+    if (orbit.theta < -0.35) rotDir = 1;
+}
+
+const el = renderer.domElement;
+const pts = new Map();
+let downInfo = null, pinchD = 0;
+
+function touched() { lastInteract = performance.now(); tween = null; }
+
+el.addEventListener("pointerdown", function (e) {
+    el.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    downInfo = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false };
+    if (pts.size === 2) {
+        const v = Array.from(pts.values());
+        pinchD = Math.hypot(v[0].x - v[1].x, v[0].y - v[1].y);
+    }
+    touched();
+});
+
+el.addEventListener("pointermove", function (e) {
+    const p = pts.get(e.pointerId);
+    if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if (pts.size === 1) {
+        orbit.theta -= dx * 0.006;
+        orbit.phi = clamp(orbit.phi - dy * 0.006, 0.15, 1.5);
+        if (downInfo && Math.hypot(e.clientX - downInfo.x, e.clientY - downInfo.y) > 5) downInfo.moved = true;
+    } else if (pts.size === 2) {
+        const v = Array.from(pts.values());
+        const d = Math.hypot(v[0].x - v[1].x, v[0].y - v[1].y);
+        if (d > 0 && pinchD > 0) orbit.radius = clamp(orbit.radius * (pinchD / d), 4, 24);
+        pinchD = d;
+        if (downInfo) downInfo.moved = true;
+    }
+    touched();
+});
+
+function endPointer(e) {
+    const wasSingle = pts.size === 1;
+    pts.delete(e.pointerId);
+    if (wasSingle && downInfo && !downInfo.moved && performance.now() - downInfo.t < 500 && e.type === "pointerup") pick(e);
+    if (pts.size === 0) downInfo = null;
+}
+el.addEventListener("pointerup", endPointer);
+el.addEventListener("pointercancel", endPointer);
+
+el.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    orbit.radius = clamp(orbit.radius * (1 + e.deltaY * 0.001), 4, 24);
+    touched();
+}, { passive: false });
+
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+function pick(e) {
+    const r = el.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const hits = ray.intersectObjects(peopleList.map(function (p) { return p.group; }), true);
+    if (hits.length) {
+        let o = hits[0].object;
+        while (o && !o.userData.personKey) o = o.parent;
+        if (o) select(o.userData.personKey);
+    }
+}
+
+/* ---------- selection + presets ---------- */
+const personCard = document.getElementById("person-card");
+
+function select(key) {
+    selected = key;
+    const p = people[key];
+    peopleList.forEach(function (q) { q.tag.classList.toggle("selected", q.key === key); });
+    selRing.position.x = p.group.position.x;
+    selRing.position.z = p.group.position.z;
+    selRing.visible = true;
+    document.getElementById("pc-name").textContent = p.cfg.name;
+    document.getElementById("pc-role").textContent = p.cfg.role;
+    document.getElementById("pc-desc").textContent = p.cfg.desc;
+    personCard.hidden = false;
+    updateHUD();
+
+    p.group.updateMatrixWorld(true);
+    const front = new THREE.Vector3(0, 0, 1).transformDirection(p.group.matrixWorld);
+    const focus = p.group.localToWorld(new THREE.Vector3(0, 1.05, 0.3));
+    flyTo({ tx: focus.x, ty: focus.y, tz: focus.z, theta: Math.atan2(front.x, front.z), phi: 1.2, radius: 4.2 }, 1.1);
+}
+
+function deselect() {
+    selected = null;
+    selRing.visible = false;
+    personCard.hidden = true;
+    peopleList.forEach(function (q) { q.tag.classList.remove("selected"); });
+}
+
+function goView(goal) { deselect(); flyTo(goal, 1.1); lastInteract = performance.now(); }
+
+document.getElementById("pc-close").addEventListener("click", function () { goView(OVERVIEW); });
+document.getElementById("btn-overview").addEventListener("click", function () { goView(OVERVIEW); });
+document.getElementById("btn-wall").addEventListener("click", function () { goView({ tx: 0, ty: 2.0, tz: -3, theta: 0, phi: 1.45, radius: 7.5 }); });
+document.getElementById("btn-top").addEventListener("click", function () { goView({ tx: 0.8, ty: 0, tz: -0.5, theta: 0, phi: 0.2, radius: 17 }); });
+
+const btnRotate = document.getElementById("btn-rotate");
+btnRotate.setAttribute("aria-pressed", String(autoRotate));
+btnRotate.addEventListener("click", function () {
+    autoRotate = !autoRotate;
+    btnRotate.setAttribute("aria-pressed", String(autoRotate));
+});
+
+const btnPause = document.getElementById("btn-pause");
+btnPause.addEventListener("click", function () {
+    paused = !paused;
+    btnPause.setAttribute("aria-pressed", String(paused));
+    btnPause.textContent = paused ? "Resume story" : "Pause story";
+});
+
+const btnDiscord = document.getElementById("btn-discord");
+if (!DISCORD_PROXY) btnDiscord.hidden = true;
+btnDiscord.addEventListener("click", function () {
+    discordOn = !discordOn;
+    btnDiscord.setAttribute("aria-pressed", String(discordOn));
+});
+
+document.getElementById("btn-replay").addEventListener("click", function () { userMode = !!(lastSc && lastSc.user); playScenario(lastSc || scenarios[0]); });
+document.getElementById("btn-next").addEventListener("click", function () { userMode = false; startScenario(scenIdx + 1); });
+
+const logCard = document.getElementById("log-card");
+const btnLog = document.getElementById("btn-log");
+btnLog.addEventListener("click", function () {
+    const open = logCard.classList.toggle("open");
+    btnLog.setAttribute("aria-pressed", String(open));
+});
+
+/* ---------- label projection ---------- */
+function updateLabels() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    peopleList.forEach(function (p) {
+        tmpV.set(0, 1.78, 0);
+        p.group.localToWorld(tmpV);
+        tmpV.project(camera);
+        if (tmpV.z > 1) { p.wrapEl.style.display = "none"; return; }
+        p.wrapEl.style.display = "";
+        const x = (tmpV.x * 0.5 + 0.5) * w, y = (-tmpV.y * 0.5 + 0.5) * h;
+        p.wrapEl.style.transform = "translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) translate(-50%,-100%)";
+    });
+}
+
+/* ---------- resize ---------- */
+function resize() {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.fov = camera.aspect < 1 ? 42 + (1 - camera.aspect) * 45 : 42;
+    camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+resize();
+
+/* =========================================================
+   MAIN LOOP
+========================================================= */
+const clock = new THREE.Clock();
+function loop() {
+    requestAnimationFrame(loop);
+    const dt = Math.min(clock.getDelta(), 0.1);
+    const t = clock.elapsedTime;
+    updateStory(dt);
+    updateStatusSmoothing(dt);
+    animatePeople(dt, t);
+    updateTween(dt);
+    updateAutoRotate(dt, performance.now());
+    applyOrbit();
+    refreshVisuals(dt, t);
+    updateLabels();
+    renderer.render(scene, camera);
+}
+
+/* =========================================================
+   REPORT AN ISSUE (AI assistant or built-in playbook)
+========================================================= */
+const ASSISTANT_URL = "";   // your Worker URL; leave empty to use the built-in playbook
+
+const WHO = ["support", "support2", "admin", "supervisor", "manager"];
+const STATUSES = ["alert", "investigating", "identified", "fixing", "resolved"];
+const POSES = ["type", "phone", "point"];
+const NODES = ["net", "fw", "core", "auth", "dialer", "floor1", "floor2", "backup"];
+
+const GENERIC_TERM = {
+    alert:         ["service: ERROR timeout", "health check: FAILED", "retrying connection..."],
+    investigating: ["health check: FAILED", "checking logs...", "service: ERROR timeout"],
+    identified:    ["error found in logs", "root cause noted in ticket"],
+    fixing:        ["applying fix...", "service: starting...", "health check: OK"],
+    resolved:      ["service: healthy", "health check: OK", "incident resolved OK"]
+};
+
+function txt(s, n) {
+    return String(s == null ? "" : s).replace(/\s+/g, " ").trim().slice(0, n);
+}
+
+// Never trust the reply: keep only known people, statuses, and poses, and trim the text.
+function cleanSteps(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(0, 14).map(function (s) {
+        if (!s || WHO.indexOf(s.who) === -1) return null;
+        const say = txt(s.say, 170);
+        if (!say) return null;
+        const st = { who: s.who, say: say, log: txt(s.log || s.say, 200) };
+        if (STATUSES.indexOf(s.status) !== -1) st.status = s.status;
+        if (POSES.indexOf(s.pose) !== -1) { st.poses = {}; st.poses[s.who] = s.pose; }
+        if (s.look === "wall" || (WHO.indexOf(s.look) !== -1 && s.look !== s.who)) { st.looks = {}; st.looks[s.who] = s.look; }
+        if (s.cmd) st.cmd = txt(s.cmd, 60);
+        return st;
+    }).filter(Boolean);
+}
+
+function fromLines(lines, issue) {
+    return lines.map(function (l) {
+        const say = l[1].replace("{issue}", issue);
+        const st = { who: l[0], say: say, log: say };
+        if (l[2]) st.status = l[2];
+        if (l[3]) st.cmd = l[3];
+        return st;
+    });
+}
+
+// Each playbook: a keyword test, incident details, a fix checklist, and the team's lines
+// as [who, say, status?, command?]. Add your own at the top (the last one is the catch-all).
+const PLAYBOOKS = [
+    {
+        re: /log\s?in|sign\s?in|locked|password|credential|auth|dialer|access denied/i,
+        title: "Login problem: {issue}", sev: "P2", affected: 40, faulty: ["auth", "dialer"],
+        fix: ["Check if the account is locked and unlock it", "Reset the password and try again", "Check that the login (authentication) service is running", "Restart the service if it stopped, then test with one user", "Tell users it works and note the cause in the ticket"],
+        lines: [
+            ["support", "Report received: “{issue}”. I'm opening a ticket and checking if it's one account or many.", "alert"],
+            ["support2", "I tried a second account on another seat. Same error, so it isn't one locked user.", "investigating"],
+            ["supervisor", "Anton, please check the login service. Jec, tell the floor we're on it."],
+            ["admin", "Checking the logs. The login service stopped responding a few minutes ago.", "identified", "systemctl status auth-svc"],
+            ["manager", "Okay. Restart it and keep me posted so I can update operations."],
+            ["admin", "Restarting the service now. Users should reconnect in about a minute.", "fixing", "systemctl restart auth-svc"],
+            ["support", "Logins work again on my side. I'm confirming with the floor.", "resolved"],
+            ["supervisor", "Good. Please add the cause to the ticket so we can prevent it."]
+        ]
+    },
+    {
+        re: /headset|audio|hear|mic|sound|speaker|echo|voice/i,
+        title: "Audio problem: {issue}", sev: "P3", affected: 8, faulty: ["floor1"],
+        fix: ["Check the headset is plugged in and not muted", "Select the headset as the audio device in the softphone", "Test with another headset or USB port", "Update or reinstall the audio driver", "If many agents are affected, ask IT to check the network"],
+        lines: [
+            ["support", "Report: “{issue}”. First I'm checking if the headset is muted or unplugged.", "alert"],
+            ["support2", "I swapped in a spare headset on that seat. Still no sound, so it isn't the headset.", "investigating"],
+            ["admin", "The wrong audio device is selected in the softphone after the last update.", "identified", "audio device: set default"],
+            ["supervisor", "Fix this seat first, then check the other seats on that row."],
+            ["admin", "Setting the headset as the default device and restarting the softphone.", "fixing", "restart softphone"],
+            ["support2", "Audio works now. I tested a call with Jec.", "resolved"],
+            ["manager", "Good. Add a note to the agent guide so they can fix it themselves next time."]
+        ]
+    },
+    {
+        re: /drop|choppy|lag|packet|network|wi-?fi|internet|vpn|disconnect|latency|offline/i,
+        title: "Network problem: {issue}", sev: "P2", affected: 30, faulty: ["core", "floor1"],
+        fix: ["Check the cable or Wi-Fi connection and try another port", "Restart the app or reconnect the VPN", "Test another device on the same network", "Check the switch port or access point for errors", "Replace the cable or reset the port if it keeps dropping"],
+        lines: [
+            ["support", "Report: “{issue}”. I'm checking if the user's cable or Wi-Fi is the problem.", "alert"],
+            ["support2", "Nearby seats have the same problem, so it isn't one computer.", "investigating"],
+            ["supervisor", "Anton, can you check the network gear for that area? It may affect calls."],
+            ["admin", "A switch port keeps going up and down, and packet loss is high.", "identified", "show interface errors"],
+            ["manager", "Do what you need. Tell me if we have to move agents to other seats."],
+            ["admin", "Resetting the port and swapping the uplink cable.", "fixing", "port reset"],
+            ["support", "Connections look stable now. No more drops on my test calls.", "resolved"],
+            ["supervisor", "Great. Please log the root cause before the shift ends."]
+        ]
+    },
+    {
+        re: /slow|freez|hang|crm|crash|not responding|loading|stuck|timeout/i,
+        title: "Slow system: {issue}", sev: "P3", affected: 25, faulty: ["core"],
+        fix: ["Close extra tabs and restart the app", "Clear the cache and sign in again", "Check if other users have the same slowness", "Check server CPU and memory", "Restart the service or add capacity if the load is high"],
+        lines: [
+            ["support", "Report: “{issue}”. I'm asking if it's slow for one user or for everyone.", "alert"],
+            ["support2", "Three other agents have the same slowness, so the problem is likely on the server.", "investigating"],
+            ["admin", "CPU is near the limit and a report job is running during peak hours.", "identified", "top"],
+            ["supervisor", "Can we pause that job until after the rush? Orly, is that okay?"],
+            ["manager", "Yes, pause it and run it tonight."],
+            ["admin", "Pausing the job now. Response times should drop.", "fixing", "pause report-job"],
+            ["support", "It's fast again for the agents I called.", "resolved"],
+            ["supervisor", "Thanks. Let's move that job to off-peak hours for good."]
+        ]
+    },
+    {
+        re: /print|scan|monitor|keyboard|mouse|computer|\bpc\b|laptop|power|screen|usb/i,
+        title: "Hardware problem: {issue}", sev: "P3", affected: 5, faulty: [],
+        fix: ["Check power and cables on both ends", "Restart the device", "Try a different port or cable", "Test the device on another computer", "Replace it if it still fails"],
+        lines: [
+            ["support", "Report: “{issue}”. Let me check the power and cables first.", "alert"],
+            ["support2", "I'm at the seat now. Everything is plugged in, but the device doesn't respond.", "investigating"],
+            ["support2", "I tried it on another computer and it works, so the port on this one is faulty.", "identified"],
+            ["supervisor", "Move the agent to a spare seat so they can keep working."],
+            ["support2", "Moving them now and logging the broken port for repair.", "fixing", "asset ticket: port repair"],
+            ["support", "The agent is working again on the spare seat.", "resolved"],
+            ["manager", "Good. Please send the faulty computer for repair."]
+        ]
+    },
+    {
+        re: /email|outlook|mail|calendar|inbox/i,
+        title: "Email problem: {issue}", sev: "P3", affected: 15, faulty: ["net"],
+        fix: ["Check the internet connection", "Sign out and back in to the mail app", "Check the mailbox is not full", "Ask the admin to check the mail server queue", "Reset the mail profile if only one user has the problem"],
+        lines: [
+            ["support", "Report: “{issue}”. I'm checking if it's one mailbox or many.", "alert"],
+            ["support2", "Two more users can't send either, so it isn't just one mailbox.", "investigating"],
+            ["admin", "The mail server queue is stuck after a very large message.", "identified", "mailq"],
+            ["supervisor", "Please clear it carefully and tell me when mail is moving."],
+            ["admin", "Clearing the stuck message and restarting the mail queue.", "fixing", "restart mail-queue"],
+            ["support", "Mail is sending and receiving again for all three users.", "resolved"],
+            ["manager", "Thanks. Add a size limit rule so this doesn't happen again."]
+        ]
+    },
+    {
+        re: /./,
+        title: "IT request: {issue}", sev: "P3", affected: 10, faulty: [],
+        fix: ["Restart the app or device and try again", "Check if it happens to other users too", "Write down any error message and the time it happened", "Share the details with IT so the team can check the logs"],
+        lines: [
+            ["support", "Report: “{issue}”. I'm opening a ticket and asking a few questions.", "alert"],
+            ["support2", "I'm checking if anyone else has the same problem.", "investigating"],
+            ["admin", "I found a related error in the logs and I know what to try.", "identified", "check logs"],
+            ["supervisor", "Okay, go ahead. Keep the ticket updated."],
+            ["admin", "Applying the fix now and testing it.", "fixing", "apply fix"],
+            ["support", "It works now. I'm confirming with the user.", "resolved"],
+            ["manager", "Good. Please add the steps to the knowledge base."]
+        ]
+    }
+];
+
+function pickPlaybook(text) {
+    for (let i = 0; i < PLAYBOOKS.length; i++) if (PLAYBOOKS[i].re.test(text)) return i;
+    return PLAYBOOKS.length - 1;
+}
+
+function localFollowUp(text) {
+    const t = text.toLowerCase();
+    if (/restart|reboot|power ?cycle/.test(t)) {
+        return [["admin", "Good idea. I'll restart the affected part and test it again.", "fixing", "restart service"],
+                ["support", "I'll ask the user to try again after the restart."]];
+    }
+    if (/thank|thanks|great|fixed|working now|works now/.test(t)) {
+        return [["manager", "Glad it's sorted. Please add a short note to the ticket.", "resolved"]];
+    }
+    if (/still|again|not work|didn'?t|doesn'?t|same/.test(t)) {
+        return [["support", "Thanks for telling us. I'm adding that to the ticket and testing again."],
+                ["admin", "If it still fails I'll check the logs for a second cause.", "investigating"]];
+    }
+    return [["support2", "Noted: “" + txt(text, 70) + "”. I'm adding it to the ticket."],
+            ["admin", "I'll keep that in mind while I check the system."]];
+}
+
+// Built-in mode: same reply shape as the AI Worker returns
+function localReply(text) {
+    const short = txt(text, 80);
+    const idx = pickPlaybook(text);
+    const generic = PLAYBOOKS.length - 1;
+    if (curSc && curSc.user && (idx === curSc.pbIdx || idx === generic)) {
+        return { newIncident: false, steps: fromLines(localFollowUp(text), short) };
+    }
+    const pb = PLAYBOOKS[idx];
+    return {
+        newIncident: true, pbIdx: idx, fix: pb.fix,
+        incident: { title: pb.title.replace("{issue}", short), severity: pb.sev, affected: pb.affected, faulty: pb.faulty },
+        steps: fromLines(pb.lines, short)
+    };
+}
+
+let userCount = 0;
+function applyReply(res, text) {
+    const steps = cleanSteps(res && res.steps);
+    if (!steps.length) { addLog("", "The team could not work out a reply. Try describing the problem in a different way.", true); return; }
+    const fix = (res && Array.isArray(res.fix) ? res.fix : []).slice(0, 6).map(function (s) { return txt(s, 140); }).filter(Boolean);
+    const wantNew = !curSc || !curSc.user || (res && res.newIncident === true);
+    if (wantNew) {
+        const inc = (res && res.incident) || {};
+        if (!steps[0].status) steps[0].status = "alert";
+        playScenario({
+            user: true, pbIdx: res.pbIdx,
+            id: "INC-" + (49000 + (++userCount)),
+            sev: ["P1", "P2", "P3"].indexOf(inc.severity) !== -1 ? inc.severity : "P3",
+            title: txt(inc.title || text, 90),
+            affected: clamp(parseInt(inc.affected, 10) || 12, 1, 400),
+            faulty: (Array.isArray(inc.faulty) ? inc.faulty : []).filter(function (f) { return NODES.indexOf(f) !== -1; }).slice(0, 3),
+            fix: fix, term: GENERIC_TERM, steps: steps
+        });
+    } else {
+        // follow-up: the new lines play next, inside the same incident
+        curSc.steps.splice.apply(curSc.steps, [stepIdx + 1, 0].concat(steps));
+        if (fix.length) { curSc.fix = fix; setupFix(curSc); maybeRevealFix(); }
+        if (holding) { holding = false; applyStep(stepIdx + 1); } else { stepT = 1e9; }
+    }
+}
+
+/* ---------- ask the assistant (Worker) ---------- */
+async function askAssistant(text) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(function () { ctrl.abort(); }, 25000);
+    try {
+        const r = await fetch(ASSISTANT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: ctrl.signal,
+            body: JSON.stringify({
+                message: text,
+                incident: curSc && curSc.user ? { title: curSc.title, severity: curSc.sev, status: S.status } : null,
+                history: chatHistory.slice(-8)
+            })
+        });
+        if (!r.ok) throw new Error("Assistant returned " + r.status);
+        return await r.json();
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+function showThinking() {
+    resetPeople();
+    const p = people.support;
+    p.speaking = true;
+    p.bubble.textContent = "Reading your report…";
+    p.bubble.classList.add("show");
+    peopleList.forEach(function (q) { if (q !== p) q.look = "support"; });
+}
+
+const reportForm = document.getElementById("report-form");
+const reportInput = document.getElementById("report-input");
+const reportSend = document.getElementById("report-send");
+reportInput.placeholder = ASSISTANT_URL ? "Describe a problem or reply to the team…" : "Describe a problem or reply to the team (built-in mode)…";
+
+async function sendReport(text) {
+    busy = true;
+    reportSend.disabled = true;
+    addLog("You", text);
+    chatHistory.push({ who: "User", text: text });
+    showThinking();
+
+    let res;
+    try {
+        res = ASSISTANT_URL ? await askAssistant(text) : localReply(text);
+    } catch (err) {
+        addLog("", "The AI assistant could not be reached, so the built-in playbook answered instead.", true);
+        res = localReply(text);
+    }
+
+    busy = false;
+    reportSend.disabled = false;
+    resetPeople();
+    userMode = true;
+    applyReply(res, text);
+}
+
+reportForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    const text = txt(reportInput.value, 300);
+    if (!text || busy) return;
+    reportInput.value = "";
+    sendReport(text);
+});
+
+document.getElementById("report-chips").addEventListener("click", function (e) {
+    const b = e.target.closest("button");
+    if (!b || busy) return;
+    reportInput.value = b.textContent;
+    if (reportForm.requestSubmit) reportForm.requestSubmit();
+    else reportForm.dispatchEvent(new Event("submit", { cancelable: true }));
+});
+
+// keep the side panels above the bottom dock, whatever height it has
+const dock = document.querySelector(".dock");
+new ResizeObserver(function () {
+    document.documentElement.style.setProperty("--dock-h", dock.offsetHeight + "px");
+}).observe(dock);
+
+/* =========================================================
+   START
+========================================================= */
+drawWall();
+drawBoard();
+racks.forEach(function (r) { r.draw(); });
+allFeeds.forEach(function (f) { f.update(0); });
+updateHUD();
+loop();
+
+});
+</script>
+</body>
+</html>
